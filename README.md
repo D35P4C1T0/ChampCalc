@@ -11,6 +11,9 @@ It converts legacy EV spreads into the new 66-point format, supports live slider
 - hard EV budget cap of `516`
 - deterministic point distribution so `516 EVs` can resolve cleanly to `66`
 - live Showdown `EVs:` line parsing
+- full Showdown set rewriting with converted Champions EVs
+- generated Swagger / OpenAPI documentation
+- public-safe validation errors for documented API routes
 - optional PayPal donation button via environment variable
 - Fastify app for local development and Vercel backend deployment
 - unit tests for conversion, HTTP behavior, and Vercel handlers
@@ -77,6 +80,9 @@ Application routes:
 
 - `/`
 - `/health`
+- `/documentation`
+- `/documentation/json`
+- `/documentation/yaml`
 - `/api/convert`
 - `/api/parse-showdown`
 
@@ -85,6 +91,15 @@ Application routes:
 ### `GET /health`
 
 Simple health check.
+
+### `GET /documentation`
+
+Interactive Swagger UI for the backend API.
+
+Raw OpenAPI specs are also available at:
+
+- `/documentation/json`
+- `/documentation/yaml`
 
 ### `GET /api/convert`
 
@@ -103,6 +118,8 @@ Example:
 curl "http://localhost:3000/api/convert?hp=252&attack=252&defense=12&specialAttack=0&specialDefense=0&speed=0"
 ```
 
+Returns both the original normalized input and the converted Champions result.
+
 ### `POST /api/convert`
 
 Accepts JSON:
@@ -120,15 +137,24 @@ Accepts JSON:
 
 Requests above `516` total EVs are rejected.
 
+Returns both the original normalized input and the converted Champions result.
+
 ### `POST /api/parse-showdown`
 
-Accepts a pasted Showdown set and extracts the EV line.
+Accepts a full pasted Showdown set, parses the `EVs:` line, converts it to Champions values, and returns the full set text with that line rewritten.
 
 ```json
 {
-  "text": "EVs: 244 HP / 4 Def / 252 SpA / 4 SpD / 4 Spe"
+  "text": "Pikachu @ Light Ball\nAbility: Static\nEVs: 252 Atk / 4 SpD / 252 Spe\nJolly Nature\n- Volt Tackle"
 }
 ```
+
+Response fields:
+
+- `found`: whether an `EVs:` line was detected
+- `evs`: the original parsed Showdown EVs
+- `result`: the converted Champions stat values
+- `championsText`: the full rewritten Showdown set
 
 ## Project structure
 

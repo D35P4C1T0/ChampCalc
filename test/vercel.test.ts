@@ -76,3 +76,46 @@ test("Vercel convert POST handler rejects invalid EV input", async () => {
     ],
   });
 });
+
+test("Vercel parse-showdown POST returns the rewritten Champions set text", async () => {
+  const app = buildApp();
+  const response = await app.inject({
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    payload: JSON.stringify({
+      text: [
+        "Gengar @ Focus Sash",
+        "Ability: Cursed Body",
+        "EVs: 4 Def / 252 SpA / 252 Spe",
+        "Timid Nature",
+        "- Shadow Ball",
+      ].join("\n"),
+    }),
+    url: "/api/parse-showdown",
+  });
+  await app.close();
+  const body = JSON.parse(response.body) as {
+    championsText: string | null;
+    found: boolean;
+    result: { defense: number; specialAttack: number; speed: number; total: number } | null;
+  };
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(body.found, true);
+  assert.equal(body.result?.defense, 1);
+  assert.equal(body.result?.specialAttack, 32);
+  assert.equal(body.result?.speed, 32);
+  assert.equal(body.result?.total, 65);
+  assert.equal(
+    body.championsText,
+    [
+      "Gengar @ Focus Sash",
+      "Ability: Cursed Body",
+      "EVs: 1 Def / 32 SpA / 32 Spe",
+      "Timid Nature",
+      "- Shadow Ball",
+    ].join("\n"),
+  );
+});

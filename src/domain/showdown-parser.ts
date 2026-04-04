@@ -1,4 +1,4 @@
-import type { EvInput } from "./ev-master.js";
+import { EV_STAT_KEYS, type EvInput } from "./ev-master.js";
 
 const EMPTY_EVS: EvInput = {
   hp: 0,
@@ -16,6 +16,15 @@ const SHOWDOWN_TO_INPUT_KEY = {
   SpA: "specialAttack",
   SpD: "specialDefense",
   Spe: "speed",
+} as const;
+
+const INPUT_TO_SHOWDOWN_STAT = {
+  hp: "HP",
+  attack: "Atk",
+  defense: "Def",
+  specialAttack: "SpA",
+  specialDefense: "SpD",
+  speed: "Spe",
 } as const;
 
 const EVS_LINE_PATTERN = /^EVs:\s*(.+)$/im;
@@ -52,4 +61,20 @@ export function parseShowdownEvs(setText: string): EvInput | null {
   }
 
   return parsedSegments > 0 ? evs : null;
+}
+
+export function buildShowdownEvsLine(evs: EvInput): string {
+  const parts = EV_STAT_KEYS
+    .filter((key) => evs[key] > 0)
+    .map((key) => `${evs[key]} ${INPUT_TO_SHOWDOWN_STAT[key]}`);
+
+  return `EVs: ${parts.length > 0 ? parts.join(" / ") : "0 HP"}`;
+}
+
+export function rewriteShowdownEvsLine(setText: string, evs: EvInput): string | null {
+  if (!EVS_LINE_PATTERN.test(setText)) {
+    return null;
+  }
+
+  return setText.replace(EVS_LINE_PATTERN, buildShowdownEvsLine(evs));
 }

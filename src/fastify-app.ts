@@ -1,12 +1,16 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { ZodError } from "zod";
 
+import { registerApiDocs } from "./http/docs.js";
 import { registerRoutes } from "./http/routes.js";
 import {
   API_CONTENT_SECURITY_POLICY,
   COMMON_SECURITY_HEADERS,
 } from "./http/security.js";
-import { validationErrorBody } from "./http/validation.js";
+import {
+  fastifyValidationErrorBody,
+  validationErrorBody,
+} from "./http/validation.js";
 
 export function configureApp(app: FastifyInstance): FastifyInstance {
   app.addHook("onSend", async (_request, reply, payload) => {
@@ -14,7 +18,11 @@ export function configureApp(app: FastifyInstance): FastifyInstance {
       reply.header(key, value);
     }
 
-    if (reply.getHeader("Content-Security-Policy") === undefined) {
+    const requestPath = _request.url.split("?")[0] ?? _request.url;
+    if (
+      reply.getHeader("Content-Security-Policy") === undefined &&
+      !requestPath.startsWith("/documentation")
+    ) {
       reply.header("Content-Security-Policy", API_CONTENT_SECURITY_POLICY);
     }
 
@@ -27,13 +35,25 @@ export function configureApp(app: FastifyInstance): FastifyInstance {
       return;
     }
 
+    if (Array.isArray((error as { validation?: unknown }).validation)) {
+      reply.status(400).send(
+        fastifyValidationErrorBody(
+          (error as { validation: Array<Record<string, unknown>> }).validation,
+        ),
+      );
+      return;
+    }
+
     app.log.error(error);
     reply.status(500).send({
       error: "Internal server error",
     });
   });
 
-  registerRoutes(app);
+  app.register(async (scopedApp) => {
+    await registerApiDocs(scopedApp);
+    registerRoutes(scopedApp);
+  });
 
   return app;
 }
