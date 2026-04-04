@@ -28,6 +28,7 @@ const PAGE_TITLE = "ChampCalc | Pokemon Champions EV Calculator";
 const PAGE_DESCRIPTION =
   "Convert Pokemon Showdown EV spreads into the new 66-point Pokemon Champions format with live sliders and built-in set parsing.";
 const SITE_NAME = "ChampCalc";
+const PROJECT_GITHUB_URL = "https://github.com/D35P4C1T0/ChampCalc";
 
 interface RenderHomePageOptions {
   pageUrl?: string;
@@ -69,11 +70,8 @@ export function renderHomePage({
     .join("");
 
   const donationLabel = DONATION_URL
-    ? "Donate"
-    : "Donation disabled";
-  const donationCopy = DONATION_URL
-    ? "Support the project"
-    : "Set PAYPAL_URL to enable.";
+    ? "Open PayPal"
+    : "PAYPAL_URL env not set";
   const canonicalUrl = pageUrl ? escapeHtml(pageUrl) : null;
   const structuredData = escapeHtml(JSON.stringify({
     "@context": "https://schema.org",
@@ -141,6 +139,11 @@ export function renderHomePage({
         --content-width: 72rem;
         --font-display: "Avenir Next", "Futura", "Trebuchet MS", sans-serif;
         --font-body: "Avenir Next", "Segoe UI", sans-serif;
+        --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+        --ease-spring-soft: cubic-bezier(0.2, 0.9, 0.24, 1);
+        --motion-fast: 180ms;
+        --motion-medium: 260ms;
+        --motion-slow: 420ms;
       }
 
       * {
@@ -254,6 +257,10 @@ export function renderHomePage({
         min-width: 0;
       }
 
+      .hero-subtitle {
+        display: block;
+      }
+
       .top-actions {
         display: flex;
         flex-wrap: wrap;
@@ -280,9 +287,10 @@ export function renderHomePage({
         text-transform: uppercase;
         cursor: pointer;
         transition:
-          transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-          background 220ms cubic-bezier(0.22, 1, 0.36, 1),
-          border-color 220ms cubic-bezier(0.22, 1, 0.36, 1);
+          transform var(--motion-medium) var(--ease-out-soft),
+          background var(--motion-medium) var(--ease-out-soft),
+          border-color var(--motion-medium) var(--ease-out-soft),
+          box-shadow var(--motion-medium) var(--ease-out-soft);
       }
 
       .action-trigger:focus-visible {
@@ -293,11 +301,11 @@ export function renderHomePage({
       .action-caret {
         color: var(--muted);
         font-size: 0.72rem;
-        transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+        transition: transform var(--motion-medium) var(--ease-out-soft);
       }
 
       .action-panel {
-        display: grid;
+        display: none;
         gap: 0.6rem;
         min-width: 14rem;
         padding: 0.8rem;
@@ -305,6 +313,15 @@ export function renderHomePage({
         border-radius: var(--radius-md);
         background: var(--panel-strong);
         box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+        will-change: opacity, transform;
+      }
+
+      .action-menu[data-open="true"] .action-panel {
+        display: grid;
+      }
+
+      .action-menu[data-open="true"] .action-caret {
+        transform: rotate(180deg);
       }
 
       .action-panel h3 {
@@ -323,10 +340,31 @@ export function renderHomePage({
         letter-spacing: -0.02em;
       }
 
+      .action-link {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(236, 244, 251, 0.22);
+        transition:
+          color var(--motion-fast) ease,
+          border-color var(--motion-fast) ease;
+      }
+
+      .action-link:hover {
+        color: var(--secondary-accent);
+        border-color: rgba(141, 200, 255, 0.5);
+      }
+
       .action-copy.muted {
         color: var(--muted);
         font-size: 0.88rem;
         font-weight: 500;
+      }
+
+      .action-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
       }
 
       .hero h1 {
@@ -357,6 +395,11 @@ export function renderHomePage({
         border-radius: var(--radius-lg);
         background: var(--panel);
         backdrop-filter: blur(14px);
+        transition:
+          transform var(--motion-medium) var(--ease-out-soft),
+          border-color var(--motion-medium) var(--ease-out-soft),
+          background var(--motion-medium) var(--ease-out-soft),
+          box-shadow var(--motion-medium) var(--ease-out-soft);
       }
 
       .summary-card {
@@ -440,6 +483,11 @@ export function renderHomePage({
         border-radius: var(--radius-lg);
         background: var(--panel);
         padding: 0.8rem;
+        transition:
+          transform var(--motion-medium) var(--ease-out-soft),
+          border-color var(--motion-medium) var(--ease-out-soft),
+          background var(--motion-medium) var(--ease-out-soft),
+          box-shadow var(--motion-medium) var(--ease-out-soft);
       }
 
       .section-head {
@@ -477,6 +525,11 @@ export function renderHomePage({
         background:
           linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
           rgba(255, 255, 255, 0.015);
+        transition:
+          transform var(--motion-medium) var(--ease-out-soft),
+          border-color var(--motion-medium) var(--ease-out-soft),
+          background var(--motion-medium) var(--ease-out-soft),
+          box-shadow var(--motion-medium) var(--ease-out-soft);
       }
 
       .showdown-head {
@@ -508,7 +561,10 @@ export function renderHomePage({
         background: rgba(3, 10, 16, 0.7);
         color: var(--text);
         font: 500 0.81rem/1.4 "SFMono-Regular", "Menlo", "Consolas", monospace;
-        transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+        transition:
+          border-color var(--motion-fast) ease,
+          box-shadow var(--motion-fast) ease,
+          background var(--motion-fast) ease;
       }
 
       .showdown-panel textarea:focus {
@@ -530,15 +586,20 @@ export function renderHomePage({
         background:
           linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
           rgba(255, 255, 255, 0.015);
-        transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+        transition:
+          border-color var(--motion-fast) ease,
+          transform var(--motion-medium) var(--ease-out-soft),
+          background var(--motion-medium) var(--ease-out-soft),
+          box-shadow var(--motion-medium) var(--ease-out-soft);
       }
 
       .stat-card:focus-within {
         border-color: var(--line-strong);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
         background:
           linear-gradient(180deg, rgba(103, 240, 194, 0.07), transparent),
           rgba(255, 255, 255, 0.02);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
       }
 
       .stat-meta {
@@ -656,8 +717,10 @@ export function renderHomePage({
 
       .button-row {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: min(100%, 22rem);
         gap: 0.75rem;
+        justify-self: end;
       }
 
       button,
@@ -673,15 +736,17 @@ export function renderHomePage({
         text-decoration: none;
         cursor: pointer;
         transition:
-          transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-          opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
-          background 220ms cubic-bezier(0.22, 1, 0.36, 1),
-          border-color 220ms cubic-bezier(0.22, 1, 0.36, 1);
+          transform var(--motion-medium) var(--ease-out-soft),
+          opacity var(--motion-medium) var(--ease-out-soft),
+          background var(--motion-medium) var(--ease-out-soft),
+          border-color var(--motion-medium) var(--ease-out-soft),
+          box-shadow var(--motion-medium) var(--ease-out-soft);
       }
 
       button:hover,
       .share-link:hover {
-        transform: translateY(-0.5px);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
       }
 
       .primary-btn {
@@ -696,17 +761,63 @@ export function renderHomePage({
         background: rgba(255, 255, 255, 0.04);
       }
 
+      .ghost-btn.danger {
+        color: #ffd7d7;
+        border-color: rgba(255, 122, 122, 0.36);
+        background: rgba(255, 122, 122, 0.12);
+      }
+
+      .ghost-btn.danger:hover {
+        border-color: rgba(255, 122, 122, 0.52);
+        background: rgba(255, 122, 122, 0.18);
+      }
+
       .share-link[hidden] {
         display: none;
       }
 
       .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
         padding: 0.55rem 0.75rem;
         border: 1px solid var(--line);
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.04);
         color: var(--muted);
         font-size: 0.88rem;
+        text-decoration: none;
+        transition:
+          transform var(--motion-medium) var(--ease-out-soft),
+          background var(--motion-medium) var(--ease-out-soft),
+          border-color var(--motion-medium) var(--ease-out-soft),
+          box-shadow var(--motion-medium) var(--ease-out-soft),
+          color var(--motion-medium) var(--ease-out-soft);
+      }
+
+      .chip svg {
+        width: 1rem;
+        height: 1rem;
+        fill: currentColor;
+      }
+
+      .chip.icon-only {
+        width: 3rem;
+        min-width: 3rem;
+        padding: 0;
+      }
+
+      .chip:hover {
+        transform: translateY(-1px);
+        border-color: var(--line-strong);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+      }
+
+      .chip.primary {
+        color: #062019;
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--accent), #9af4db);
       }
 
       .footer-link {
@@ -722,20 +833,34 @@ export function renderHomePage({
         font-weight: 700;
         text-decoration: none;
         transition:
-          transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-          background 220ms cubic-bezier(0.22, 1, 0.36, 1),
-          border-color 220ms cubic-bezier(0.22, 1, 0.36, 1);
+          transform var(--motion-medium) var(--ease-out-soft),
+          background var(--motion-medium) var(--ease-out-soft),
+          border-color var(--motion-medium) var(--ease-out-soft),
+          box-shadow var(--motion-medium) var(--ease-out-soft);
       }
 
       .footer-link:hover {
-        transform: translateY(-0.5px);
+        transform: translateY(-1px);
         border-color: var(--line-strong);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
       }
 
       .footer-link.primary {
         border: 0;
         color: #062019;
         background: linear-gradient(135deg, var(--accent), #9af4db);
+      }
+
+      .footer-link.icon-only {
+        width: 3rem;
+        min-width: 3rem;
+        padding: 0;
+      }
+
+      .footer-link.icon-only svg {
+        width: 1.1rem;
+        height: 1.1rem;
+        fill: currentColor;
       }
 
       .reset-modal {
@@ -747,17 +872,29 @@ export function renderHomePage({
         background: linear-gradient(180deg, rgba(14, 28, 42, 0.98), rgba(8, 18, 27, 0.98));
         color: var(--text);
         box-shadow: 0 28px 80px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        transform: translateY(18px) scale(0.975);
+        transition:
+          opacity var(--motion-medium) var(--ease-out-soft),
+          transform var(--motion-medium) var(--ease-spring-soft);
+        will-change: opacity, transform;
       }
 
       .reset-modal::backdrop {
         background: rgba(3, 10, 16, 0.72);
         backdrop-filter: blur(8px);
+        animation: modal-backdrop-out var(--motion-fast) ease forwards;
       }
 
       .reset-modal-content {
         display: grid;
         gap: 0.8rem;
         padding: 1rem;
+        opacity: 0;
+        transform: translateY(10px);
+        transition:
+          opacity var(--motion-medium) var(--ease-out-soft),
+          transform var(--motion-medium) var(--ease-spring-soft);
       }
 
       .reset-modal h3 {
@@ -777,7 +914,29 @@ export function renderHomePage({
         gap: 0.6rem;
       }
 
+      .reset-modal[open][data-visible="true"] {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      .reset-modal[open][data-visible="true"] .reset-modal-content {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .reset-modal[open][data-visible="true"]::backdrop {
+        animation: modal-backdrop-in var(--motion-medium) var(--ease-out-soft) forwards;
+      }
+
       @media (hover: hover) and (pointer: fine) {
+        .summary-card:hover,
+        .calculator:hover,
+        .showdown-panel:hover {
+          transform: translateY(-1px);
+          border-color: var(--line-strong);
+          box-shadow: 0 18px 42px rgba(0, 0, 0, 0.14);
+        }
+
         .action-menu::after {
           content: "";
           position: absolute;
@@ -788,6 +947,7 @@ export function renderHomePage({
         }
 
         .action-panel {
+          display: grid;
           position: absolute;
           top: calc(100% + 0.35rem);
           left: 0;
@@ -796,8 +956,8 @@ export function renderHomePage({
           transform: translateY(-6px) scale(0.985);
           pointer-events: none;
           transition:
-            opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
-            transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+            opacity var(--motion-medium) var(--ease-out-soft),
+            transform var(--motion-medium) var(--ease-spring-soft);
           transform-origin: top left;
         }
 
@@ -808,6 +968,7 @@ export function renderHomePage({
         }
 
         .action-menu:hover .action-panel,
+        .action-menu[data-open="true"] .action-panel,
         .action-menu:focus-within .action-panel {
           opacity: 1;
           transform: translateY(0) scale(1);
@@ -815,13 +976,16 @@ export function renderHomePage({
         }
 
         .action-menu:hover .action-trigger,
+        .action-menu[data-open="true"] .action-trigger,
         .action-menu:focus-within .action-trigger {
-          transform: translateY(-0.5px);
+          transform: translateY(-1px);
           border-color: var(--line-strong);
           background: rgba(255, 255, 255, 0.06);
+          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
         }
 
         .action-menu:hover .action-caret,
+        .action-menu[data-open="true"] .action-caret,
         .action-menu:focus-within .action-caret {
           transform: rotate(180deg);
         }
@@ -840,15 +1004,51 @@ export function renderHomePage({
 
       .reveal {
         opacity: 0;
-        transform: translateY(10px);
-        animation: rise 760ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        transform: translateY(14px) scale(0.988);
+        animation: rise 760ms var(--ease-out-soft) forwards;
         animation-delay: var(--delay, 0ms);
+        will-change: opacity, transform;
       }
 
       @keyframes rise {
         to {
           opacity: 1;
-          transform: translateY(0);
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes modal-backdrop-in {
+        from {
+          background: rgba(3, 10, 16, 0);
+          backdrop-filter: blur(0);
+        }
+
+        to {
+          background: rgba(3, 10, 16, 0.72);
+          backdrop-filter: blur(8px);
+        }
+      }
+
+      @keyframes modal-backdrop-out {
+        from {
+          background: rgba(3, 10, 16, 0.72);
+          backdrop-filter: blur(8px);
+        }
+
+        to {
+          background: rgba(3, 10, 16, 0);
+          backdrop-filter: blur(0);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 1ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 1ms !important;
+          scroll-behavior: auto !important;
         }
       }
 
@@ -876,6 +1076,10 @@ export function renderHomePage({
         .hero h1 {
           font-size: clamp(1.85rem, 9vw, 2.5rem);
           line-height: 0.96;
+        }
+
+        .hero-subtitle {
+          display: none;
         }
 
         .hero-grid {
@@ -1125,7 +1329,7 @@ export function renderHomePage({
 
         .button-row {
           width: 100%;
-          max-width: 18rem;
+          max-width: 24rem;
         }
 
         .top-actions {
@@ -1154,45 +1358,84 @@ export function renderHomePage({
           <div class="hero-head">
             <div class="hero-copy">
               <h1 class="reveal" style="--delay:60ms">Champions EV calculator</h1>
-              <p class="reveal" style="--delay:110ms">
+              <p class="hero-subtitle reveal" style="--delay:110ms">
                 Convert Showdown EVs into the new ${MAX_TOTAL_CHAMPIONS}-point Champions format
                 with live sliders and instant set parsing.
               </p>
             </div>
             <div class="top-actions">
-              <article class="action-menu reveal" style="--delay:20ms">
-                <button class="action-trigger" type="button" aria-haspopup="true">
+              <article class="action-menu reveal" style="--delay:20ms" data-action-menu>
+                <button class="action-trigger" type="button" aria-haspopup="true" aria-expanded="false">
                   <span>Creator</span>
                   <span class="action-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="action-panel">
                   <h3>Creator</h3>
-                  <p class="action-copy">${escapeHtml(CREATOR_GITHUB_HANDLE)}</p>
-                  <a
-                    class="footer-link"
-                    href="${escapeHtml(CREATOR_GITHUB_URL)}"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    GitHub
-                  </a>
+                  <div class="action-row">
+                    <p class="action-copy">
+                      <a
+                        class="action-link"
+                        href="${escapeHtml(CREATOR_GITHUB_URL)}"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        ${escapeHtml(CREATOR_GITHUB_HANDLE)}
+                      </a>
+                    </p>
+                    <a
+                      class="footer-link icon-only"
+                      href="${escapeHtml(PROJECT_GITHUB_URL)}"
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="View ChampCalc on GitHub"
+                      title="View ChampCalc on GitHub"
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+                      </svg>
+                    </a>
+                  </div>
                 </div>
               </article>
-              <article class="action-menu align-right reveal" style="--delay:80ms">
-                <button class="action-trigger" type="button" aria-haspopup="true">
+              <article class="action-menu align-right reveal" style="--delay:80ms" data-action-menu>
+                <button class="action-trigger" type="button" aria-haspopup="true" aria-expanded="false">
                   <span>Donate</span>
                   <span class="action-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="action-panel">
                   <h3>Donate</h3>
-                  <p class="action-copy ${DONATION_URL ? "" : "muted"}"${DONATION_URL ? "" : ` id="donation-copy"`}>
-                    ${escapeHtml(donationCopy)}
-                  </p>
+                  <div class="action-row">
+                    <p class="action-copy ${DONATION_URL ? "" : "muted"}" id="donation-copy">
+                      PayPal
+                    </p>
                   ${
                     DONATION_URL
-                      ? `<a class="footer-link primary" href="${escapeHtml(DONATION_URL)}" target="_blank" rel="noreferrer">${escapeHtml(donationLabel)}</a>`
-                      : `<span class="chip">Set PAYPAL_URL</span>`
+                      ? `<a
+                          class="chip primary icon-only"
+                          id="donate-chip"
+                          href="${escapeHtml(DONATION_URL)}"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="${escapeHtml(donationLabel)} with PayPal"
+                          title="${escapeHtml(donationLabel)} with PayPal"
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M7.16 20.33H3.89a.6.6 0 0 1-.59-.7L6.42 1.22a.83.83 0 0 1 .82-.69h7.49c2.57 0 4.46.54 5.62 1.61 1.08.99 1.5 2.46 1.23 4.37l-.02.14v.4l.31.17c.26.14.47.31.62.52.53.74.69 1.68.49 2.87-.23 1.38-.78 2.56-1.64 3.5-.79.86-1.8 1.51-3 1.92-1.16.39-2.48.59-3.92.59h-.75c-.54 0-.99.4-1.08.94l-.08.42-.58 3.58-.03.13a.84.84 0 0 1-.82.67H8.52l-.36-.02-.05-.01-.95-.02Zm10.75-13.39c-.06.41-.16.78-.3 1.12-.67 1.58-2.22 2.4-4.49 2.4h-1.15a.83.83 0 0 0-.82.69l-.58 3.61-.16 1.02-.02.12c-.07.43-.44.75-.88.75H7.3l.52-3.2 1.12-6.92a.83.83 0 0 1 .82-.69h1.71c1.13 0 2.01.08 2.61.24.55.14.98.38 1.29.71.33.35.55.77.64 1.27.1.52.1 1.14 0 1.85ZM9.36 5.19 8.4 11.11l-.02.13a.83.83 0 0 1-.82.69H5.3a.6.6 0 0 1-.59-.7L6.06 2.7a.83.83 0 0 1 .82-.69h3.84c1.77 0 3.03.37 3.76 1.09.36.36.59.78.71 1.25.13.5.13 1.1 0 1.84-.12.73-.36 1.33-.71 1.79-.75.98-2.06 1.47-3.98 1.47H9.36Z"></path>
+                          </svg>
+                        </a>`
+                      : `<button
+                          class="chip icon-only"
+                          id="donate-chip"
+                          type="button"
+                          aria-label="${escapeHtml(donationLabel)}"
+                          title="${escapeHtml(donationLabel)}"
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M7.16 20.33H3.89a.6.6 0 0 1-.59-.7L6.42 1.22a.83.83 0 0 1 .82-.69h7.49c2.57 0 4.46.54 5.62 1.61 1.08.99 1.5 2.46 1.23 4.37l-.02.14v.4l.31.17c.26.14.47.31.62.52.53.74.69 1.68.49 2.87-.23 1.38-.78 2.56-1.64 3.5-.79.86-1.8 1.51-3 1.92-1.16.39-2.48.59-3.92.59h-.75c-.54 0-.99.4-1.08.94l-.08.42-.58 3.58-.03.13a.84.84 0 0 1-.82.67H8.52l-.36-.02-.05-.01-.95-.02Zm10.75-13.39c-.06.41-.16.78-.3 1.12-.67 1.58-2.22 2.4-4.49 2.4h-1.15a.83.83 0 0 0-.82.69l-.58 3.61-.16 1.02-.02.12c-.07.43-.44.75-.88.75H7.3l.52-3.2 1.12-6.92a.83.83 0 0 1 .82-.69h1.71c1.13 0 2.01.08 2.61.24.55.14.98.38 1.29.71.33.35.55.77.64 1.27.1.52.1 1.14 0 1.85ZM9.36 5.19 8.4 11.11l-.02.13a.83.83 0 0 1-.82.69H5.3a.6.6 0 0 1-.59-.7L6.06 2.7a.83.83 0 0 1 .82-.69h3.84c1.77 0 3.03.37 3.76 1.09.36.36.59.78.71 1.25.13.5.13 1.1 0 1.84-.12.73-.36 1.33-.71 1.79-.75.98-2.06 1.47-3.98 1.47H9.36Z"></path>
+                          </svg>
+                        </button>`
                   }
+                  </div>
                 </div>
               </article>
             </div>
@@ -1251,8 +1494,12 @@ export function renderHomePage({
 
               <div class="toolbar">
                 <div class="button-row">
-                  <button class="ghost-btn" id="reset-btn" type="button">Reset</button>
+                  <button class="ghost-btn" id="export-btn" type="button">Export to Champions</button>
+                  <button class="ghost-btn danger" id="reset-btn" type="button">Reset</button>
                 </div>
+                <!--
+                  Reserved for the future Export to Champions flow.
+                  The old Share summary button markup is kept here as reference until export is implemented.
                 <a
                   class="share-link"
                   id="share-link"
@@ -1261,6 +1508,7 @@ export function renderHomePage({
                 >
                   Share summary
                 </a>
+                -->
               </div>
             </form>
           </section>
@@ -1279,11 +1527,32 @@ export function renderHomePage({
       </div>
     </dialog>
 
+    <dialog class="reset-modal" id="export-modal" aria-labelledby="export-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="export-modal-title">Export to Champions is still in progress</h3>
+        <p>This feature is a work in progress and will be updated after April 8, 2026.</p>
+        <div class="reset-modal-actions">
+          <button class="primary-btn" id="export-close-btn" type="button">Got it</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="reset-modal" id="donation-modal" aria-labelledby="donation-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="donation-modal-title">PAYPAL_URL env not set</h3>
+        <p>This deployment does not have a PayPal URL configured yet.</p>
+        <div class="reset-modal-actions">
+          <button class="primary-btn" id="donation-close-btn" type="button">Got it</button>
+        </div>
+      </div>
+    </dialog>
+
     <script type="module" nonce="${escapeHtml(scriptNonce)}">
       const factor = ${JSON.stringify(EV_TO_CHAMPION_FACTOR)};
       const maxTotal = ${JSON.stringify(MAX_TOTAL_CHAMPIONS)};
-      const shareMessage = ${JSON.stringify(APP_SHARE_MESSAGE)};
-      const downloadUrl = ${JSON.stringify(APP_DOWNLOAD_URL)};
+      // Reserved for the future Export to Champions flow.
+      // const shareMessage = ${JSON.stringify(APP_SHARE_MESSAGE)};
+      // const downloadUrl = ${JSON.stringify(APP_DOWNLOAD_URL)};
 
       const statKeys = ${JSON.stringify(EV_STAT_KEYS)};
       const form = document.querySelector("#calculator-form");
@@ -1293,13 +1562,22 @@ export function renderHomePage({
       const progressBar = document.querySelector("#progress-bar");
       const evTotal = document.querySelector("#ev-total");
       const evHint = document.querySelector("#ev-hint");
-      const shareLink = document.querySelector("#share-link");
+      const donateChip = document.querySelector("#donate-chip");
+      // Reserved for the future Export to Champions flow.
+      // const shareLink = document.querySelector("#share-link");
+      const exportButton = document.querySelector("#export-btn");
       const resetButton = document.querySelector("#reset-btn");
+      const donationModal = document.querySelector("#donation-modal");
+      const donationCloseButton = document.querySelector("#donation-close-btn");
+      const exportModal = document.querySelector("#export-modal");
+      const exportCloseButton = document.querySelector("#export-close-btn");
       const resetModal = document.querySelector("#reset-modal");
       const resetCancelButton = document.querySelector("#reset-cancel-btn");
       const resetConfirmButton = document.querySelector("#reset-confirm-btn");
       const showdownSetInput = document.querySelector("#showdown-set");
       const showdownStatus = document.querySelector("#showdown-status");
+      const actionMenus = Array.from(document.querySelectorAll("[data-action-menu]"));
+      const modalCloseTimers = new WeakMap();
 
       const showdownToInputKey = {
         HP: "hp",
@@ -1459,62 +1737,66 @@ export function renderHomePage({
         applyValues(clamped);
       }
 
-      function setShareLabel(label) {
-        shareLink.textContent = label;
-        if (label !== "Share summary") {
-          window.setTimeout(() => {
-            shareLink.textContent = "Share summary";
-          }, 1600);
-        }
-      }
+      /*
+        Reserved for the future Export to Champions flow.
 
-      async function copyText(text) {
-        if (navigator.clipboard?.writeText) {
-          try {
-            await navigator.clipboard.writeText(text);
-            return true;
-          } catch {
-            // Fall through to legacy copy path.
+        function setShareLabel(label) {
+          shareLink.textContent = label;
+          if (label !== "Share summary") {
+            window.setTimeout(() => {
+              shareLink.textContent = "Share summary";
+            }, 1600);
           }
         }
 
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.top = "0";
-        textarea.style.left = "0";
-        textarea.style.opacity = "0";
-        textarea.style.pointerEvents = "none";
-        textarea.style.fontSize = "16px";
-        document.body.appendChild(textarea);
+        async function copyText(text) {
+          if (navigator.clipboard?.writeText) {
+            try {
+              await navigator.clipboard.writeText(text);
+              return true;
+            } catch {
+              // Fall through to legacy copy path.
+            }
+          }
 
-        const selection = document.getSelection();
-        const originalRange = selection && selection.rangeCount > 0
-          ? selection.getRangeAt(0)
-          : null;
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.top = "0";
+          textarea.style.left = "0";
+          textarea.style.opacity = "0";
+          textarea.style.pointerEvents = "none";
+          textarea.style.fontSize = "16px";
+          document.body.appendChild(textarea);
 
-        textarea.focus();
-        textarea.select();
-        textarea.setSelectionRange(0, textarea.value.length);
+          const selection = document.getSelection();
+          const originalRange = selection && selection.rangeCount > 0
+            ? selection.getRangeAt(0)
+            : null;
 
-        let copied = false;
+          textarea.focus();
+          textarea.select();
+          textarea.setSelectionRange(0, textarea.value.length);
 
-        try {
-          copied = document.execCommand("copy");
-        } catch {
-          copied = false;
+          let copied = false;
+
+          try {
+            copied = document.execCommand("copy");
+          } catch {
+            copied = false;
+          }
+
+          document.body.removeChild(textarea);
+
+          if (originalRange && selection) {
+            selection.removeAllRanges();
+            selection.addRange(originalRange);
+          }
+
+          return copied;
         }
-
-        document.body.removeChild(textarea);
-
-        if (originalRange && selection) {
-          selection.removeAllRanges();
-          selection.addRange(originalRange);
-        }
-
-        return copied;
-      }
+      */
 
       function compute() {
         const values = readAllValues();
@@ -1550,38 +1832,42 @@ export function renderHomePage({
         evTotal.textContent = String(totalInputEvs) + " / " + ${MAX_TOTAL_EVS} + " EVs";
         evHint.textContent = String(${MAX_TOTAL_EVS} - totalInputEvs) + " EVs left";
 
-        const shareText = shareMessage + "\\n" +
-          "Spread: " + statKeys.map((key) => key + "=" + readValue(key)).join(", ") + "\\n" +
-          "Total EVs: " + totalInputEvs + " / " + ${MAX_TOTAL_EVS} + "\\n" +
-          "Result: " + total + " / " + maxTotal +
-          (downloadUrl ? "\\n" + downloadUrl : "");
+        /*
+          Reserved for the future Export to Champions flow.
 
-        shareLink.onclick = async (event) => {
-          event.preventDefault();
+          const shareText = shareMessage + "\\n" +
+            "Spread: " + statKeys.map((key) => key + "=" + readValue(key)).join(", ") + "\\n" +
+            "Total EVs: " + totalInputEvs + " / " + ${MAX_TOTAL_EVS} + "\\n" +
+            "Result: " + total + " / " + maxTotal +
+            (downloadUrl ? "\\n" + downloadUrl : "");
 
-          if (navigator.share) {
-            try {
-              await navigator.share({
-                title: "Champions EV calculator",
-                text: shareText,
-              });
-              return;
-            } catch (error) {
-              if (error instanceof DOMException && error.name === "AbortError") {
+          shareLink.onclick = async (event) => {
+            event.preventDefault();
+
+            if (navigator.share) {
+              try {
+                await navigator.share({
+                  title: "Champions EV calculator",
+                  text: shareText,
+                });
                 return;
+              } catch (error) {
+                if (error instanceof DOMException && error.name === "AbortError") {
+                  return;
+                }
               }
             }
-          }
 
-          const copied = await copyText(shareText);
-          if (copied) {
-            setShareLabel("Copied summary");
-            return;
-          }
+            const copied = await copyText(shareText);
+            if (copied) {
+              setShareLabel("Copied summary");
+              return;
+            }
 
-          window.prompt("Copy this summary:", shareText);
-          setShareLabel("Copy manually");
-        };
+            window.prompt("Copy this summary:", shareText);
+            setShareLabel("Copy manually");
+          };
+        */
       }
 
       function updateFromShowdownText() {
@@ -1610,22 +1896,104 @@ export function renderHomePage({
         compute();
       }
 
-      function openResetModal() {
-        if (typeof resetModal.showModal === "function") {
-          resetModal.showModal();
-          return;
+      function openModal(modal) {
+        const existingTimer = modalCloseTimers.get(modal);
+        if (existingTimer) {
+          window.clearTimeout(existingTimer);
         }
 
-        resetModal.setAttribute("open", "");
+        modal.dataset.closing = "false";
+
+        if (typeof modal.showModal === "function") {
+          modal.showModal();
+        } else {
+          modal.setAttribute("open", "");
+        }
+
+        window.requestAnimationFrame(() => {
+          modal.dataset.visible = "true";
+        });
       }
 
-      function closeResetModal() {
-        if (typeof resetModal.close === "function") {
-          resetModal.close();
+      function finishClosingModal(modal) {
+        if (typeof modal.close === "function") {
+          modal.close();
+        } else {
+          modal.removeAttribute("open");
+        }
+
+        delete modal.dataset.visible;
+        delete modal.dataset.closing;
+        modalCloseTimers.delete(modal);
+
+        if (modal === donationModal) {
+          const donationMenu = donateChip?.closest("[data-action-menu]");
+          if (donationMenu instanceof HTMLElement) {
+            setActionMenuOpen(donationMenu, false);
+
+            const donationTrigger = donationMenu.querySelector(".action-trigger");
+            if (donationTrigger instanceof HTMLElement) {
+              donationTrigger.blur();
+            }
+          }
+
+          if (donateChip instanceof HTMLElement) {
+            donateChip.blur();
+          }
+
+          window.requestAnimationFrame(() => {
+            const activeElement = document.activeElement;
+            if (activeElement instanceof HTMLElement) {
+              activeElement.blur();
+            }
+          });
+        }
+      }
+
+      function closeModal(modal) {
+        if (!modal.hasAttribute("open") || modal.dataset.closing === "true") {
           return;
         }
 
-        resetModal.removeAttribute("open");
+        modal.dataset.visible = "false";
+        modal.dataset.closing = "true";
+
+        const timer = window.setTimeout(() => {
+          finishClosingModal(modal);
+        }, 220);
+
+        modalCloseTimers.set(modal, timer);
+      }
+
+      function setActionMenuOpen(menu, isOpen) {
+        menu.dataset.open = isOpen ? "true" : "false";
+
+        const trigger = menu.querySelector(".action-trigger");
+        if (trigger instanceof HTMLButtonElement) {
+          trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        }
+      }
+
+      function collapseActionMenu(menu) {
+        setActionMenuOpen(menu, false);
+
+        const trigger = menu.querySelector(".action-trigger");
+        if (trigger instanceof HTMLElement) {
+          trigger.blur();
+        }
+
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLElement && menu.contains(activeElement)) {
+          activeElement.blur();
+        }
+      }
+
+      function closeActionMenus(exceptMenu = null) {
+        for (const menu of actionMenus) {
+          if (menu !== exceptMenu) {
+            collapseActionMenu(menu);
+          }
+        }
       }
 
       form.addEventListener("input", (event) => {
@@ -1635,19 +2003,86 @@ export function renderHomePage({
         }
         compute();
       });
+      exportButton.addEventListener("click", () => {
+        openModal(exportModal);
+      });
+      if (donateChip instanceof HTMLButtonElement) {
+        donateChip.addEventListener("click", () => {
+          openModal(donationModal);
+        });
+      }
       resetButton.addEventListener("click", () => {
-        openResetModal();
+        openModal(resetModal);
+      });
+      donationCloseButton.addEventListener("click", () => {
+        closeModal(donationModal);
+      });
+      exportCloseButton.addEventListener("click", () => {
+        closeModal(exportModal);
       });
       resetCancelButton.addEventListener("click", () => {
-        closeResetModal();
+        closeModal(resetModal);
       });
       resetConfirmButton.addEventListener("click", () => {
-        closeResetModal();
+        closeModal(resetModal);
         form.reset();
       });
-      resetModal.addEventListener("click", (event) => {
-        if (event.target === resetModal) {
-          closeResetModal();
+      for (const modal of [resetModal, exportModal, donationModal]) {
+        modal.addEventListener("click", (event) => {
+          if (event.target === modal) {
+            closeModal(modal);
+          }
+        });
+        modal.addEventListener("cancel", (event) => {
+          event.preventDefault();
+          closeModal(modal);
+        });
+      }
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          if (donationModal.hasAttribute("open")) {
+            closeModal(donationModal);
+          }
+
+          if (exportModal.hasAttribute("open")) {
+            closeModal(exportModal);
+          }
+
+          if (resetModal.hasAttribute("open")) {
+            closeModal(resetModal);
+          }
+        }
+      });
+      for (const menu of actionMenus) {
+        setActionMenuOpen(menu, false);
+
+        const trigger = menu.querySelector(".action-trigger");
+        if (!(trigger instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        trigger.addEventListener("click", (event) => {
+          event.preventDefault();
+
+          const isOpen = menu.dataset.open === "true";
+          closeActionMenus(menu);
+          if (isOpen) {
+            collapseActionMenu(menu);
+            return;
+          }
+
+          setActionMenuOpen(menu, true);
+        });
+      }
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element) || !target.closest("[data-action-menu]")) {
+          closeActionMenus();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeActionMenus();
         }
       });
       form.addEventListener("reset", () => {
