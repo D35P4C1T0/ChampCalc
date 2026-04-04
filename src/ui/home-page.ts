@@ -69,11 +69,11 @@ export function renderHomePage({
     .join("");
 
   const donationLabel = DONATION_URL
-    ? "Support the creator"
+    ? "Donate"
     : "Donation disabled";
   const donationCopy = DONATION_URL
-    ? "A PayPal donation link is configured for this deployment."
-    : "Set PAYPAL_URL to enable the donation button.";
+    ? "Support the project"
+    : "Set PAYPAL_URL to enable.";
   const canonicalUrl = pageUrl ? escapeHtml(pageUrl) : null;
   const structuredData = escapeHtml(JSON.stringify({
     "@context": "https://schema.org",
@@ -245,6 +245,90 @@ export function renderHomePage({
         padding: 0.9rem 0.8rem 0.75rem;
       }
 
+      .hero-head {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .hero-copy {
+        min-width: 0;
+      }
+
+      .top-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .action-menu {
+        position: relative;
+      }
+
+      .action-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.72rem 0.9rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+          background 220ms cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 220ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .action-trigger:focus-visible {
+        outline: 2px solid var(--secondary-accent);
+        outline-offset: 3px;
+      }
+
+      .action-caret {
+        color: var(--muted);
+        font-size: 0.72rem;
+        transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .action-panel {
+        display: grid;
+        gap: 0.6rem;
+        min-width: 14rem;
+        padding: 0.8rem;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--panel-strong);
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+      }
+
+      .action-panel h3 {
+        margin: 0;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .action-copy {
+        margin: 0;
+        color: var(--text);
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .action-copy.muted {
+        color: var(--muted);
+        font-size: 0.88rem;
+        font-weight: 500;
+      }
+
       .hero h1 {
         margin: 0;
         max-width: 12ch;
@@ -323,7 +407,9 @@ export function renderHomePage({
         width: 0%;
         border-radius: inherit;
         background: linear-gradient(90deg, var(--accent), var(--highlight));
-        transition: width 180ms ease, filter 180ms ease;
+        transition:
+          width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 260ms cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .summary-meta {
@@ -586,12 +672,16 @@ export function renderHomePage({
         text-align: center;
         text-decoration: none;
         cursor: pointer;
-        transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
+        transition:
+          transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+          background 220ms cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 220ms cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       button:hover,
       .share-link:hover {
-        transform: translateY(-1px);
+        transform: translateY(-0.5px);
       }
 
       .primary-btn {
@@ -610,26 +700,6 @@ export function renderHomePage({
         display: none;
       }
 
-      .footer-card h3 {
-        margin: 0;
-        font-size: 0.86rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-      }
-
-      .footer-card p {
-        margin: 0;
-        color: var(--text);
-        line-height: 1.6;
-      }
-
-      .chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.55rem;
-      }
-
       .chip {
         padding: 0.55rem 0.75rem;
         border: 1px solid var(--line);
@@ -637,39 +707,6 @@ export function renderHomePage({
         background: rgba(255, 255, 255, 0.04);
         color: var(--muted);
         font-size: 0.88rem;
-      }
-
-      .footer-grid {
-        display: grid;
-        gap: 0.7rem;
-        padding: 0 0.8rem 0.8rem;
-      }
-
-      .footer-card {
-        display: grid;
-        gap: 0.7rem;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-lg);
-        background: var(--panel);
-        padding: 0.8rem;
-        height: 100%;
-      }
-
-      .footer-inline {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-      }
-
-      .footer-inline p {
-        flex: 1;
-      }
-
-      .footer-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
       }
 
       .footer-link {
@@ -684,23 +721,14 @@ export function renderHomePage({
         background: rgba(255, 255, 255, 0.04);
         font-weight: 700;
         text-decoration: none;
-        transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
-      }
-
-      .footer-link.icon-only {
-        width: 3rem;
-        min-width: 3rem;
-        padding: 0;
-      }
-
-      .footer-link.icon-only svg {
-        width: 1.25rem;
-        height: 1.25rem;
-        fill: currentColor;
+        transition:
+          transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+          background 220ms cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 220ms cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .footer-link:hover {
-        transform: translateY(-1px);
+        transform: translateY(-0.5px);
         border-color: var(--line-strong);
       }
 
@@ -708,6 +736,95 @@ export function renderHomePage({
         border: 0;
         color: #062019;
         background: linear-gradient(135deg, var(--accent), #9af4db);
+      }
+
+      .reset-modal {
+        width: min(calc(100% - 1.5rem), 24rem);
+        margin: auto;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: linear-gradient(180deg, rgba(14, 28, 42, 0.98), rgba(8, 18, 27, 0.98));
+        color: var(--text);
+        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.4);
+      }
+
+      .reset-modal::backdrop {
+        background: rgba(3, 10, 16, 0.72);
+        backdrop-filter: blur(8px);
+      }
+
+      .reset-modal-content {
+        display: grid;
+        gap: 0.8rem;
+        padding: 1rem;
+      }
+
+      .reset-modal h3 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: -0.03em;
+      }
+
+      .reset-modal p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .reset-modal-actions {
+        display: grid;
+        gap: 0.6rem;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .action-menu::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 100%;
+          height: 0.6rem;
+        }
+
+        .action-panel {
+          position: absolute;
+          top: calc(100% + 0.35rem);
+          left: 0;
+          z-index: 6;
+          opacity: 0;
+          transform: translateY(-6px) scale(0.985);
+          pointer-events: none;
+          transition:
+            opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+          transform-origin: top left;
+        }
+
+        .action-menu.align-right .action-panel {
+          left: auto;
+          right: 0;
+          transform-origin: top right;
+        }
+
+        .action-menu:hover .action-panel,
+        .action-menu:focus-within .action-panel {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          pointer-events: auto;
+        }
+
+        .action-menu:hover .action-trigger,
+        .action-menu:focus-within .action-trigger {
+          transform: translateY(-0.5px);
+          border-color: var(--line-strong);
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        .action-menu:hover .action-caret,
+        .action-menu:focus-within .action-caret {
+          transform: rotate(180deg);
+        }
       }
 
       .warning {
@@ -723,8 +840,8 @@ export function renderHomePage({
 
       .reveal {
         opacity: 0;
-        transform: translateY(14px);
-        animation: rise 560ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+        transform: translateY(10px);
+        animation: rise 760ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
         animation-delay: var(--delay, 0ms);
       }
 
@@ -838,7 +955,7 @@ export function renderHomePage({
 
         .showdown-panel,
         .stat-card,
-        .footer-card {
+        .action-panel {
           border-radius: 14px;
         }
 
@@ -948,14 +1065,24 @@ export function renderHomePage({
           font-size: 0.88rem;
         }
 
-        .footer-grid {
+        .top-actions {
+          display: grid;
           gap: 0.55rem;
-          padding: 0 0.65rem max(0.65rem, env(safe-area-inset-bottom));
         }
 
-        .footer-card {
-          gap: 0.55rem;
-          padding: 0.68rem;
+        .action-trigger {
+          width: 100%;
+          justify-content: space-between;
+          font-size: 0.74rem;
+        }
+
+        .action-panel {
+          min-width: 0;
+          margin-top: 0.45rem;
+        }
+
+        .reset-modal-content {
+          padding: 0.9rem;
         }
       }
 
@@ -972,15 +1099,15 @@ export function renderHomePage({
           padding: 1.6rem 1.4rem 1rem;
         }
 
-        .app,
-        .footer-grid {
-          padding-left: 1.4rem;
-          padding-right: 1.4rem;
+        .hero-head {
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: start;
+          gap: 1rem;
         }
 
-        .footer-grid {
-          grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.95fr);
-          align-items: stretch;
+        .app {
+          padding-left: 1.4rem;
+          padding-right: 1.4rem;
         }
 
         .summary-card {
@@ -1000,6 +1127,23 @@ export function renderHomePage({
           width: 100%;
           max-width: 18rem;
         }
+
+        .top-actions {
+          display: flex;
+          gap: 0.7rem;
+          justify-content: flex-end;
+          align-self: start;
+        }
+
+        .action-trigger {
+          width: auto;
+          justify-content: flex-start;
+          font-size: 0.78rem;
+        }
+
+        .action-panel {
+          margin-top: 0;
+        }
       }
     </style>
   </head>
@@ -1007,7 +1151,52 @@ export function renderHomePage({
     <div class="page">
       <div class="shell">
         <header class="hero">
-          <h1 class="reveal" style="--delay:60ms">Champions EV calculator</h1>
+          <div class="hero-head">
+            <div class="hero-copy">
+              <h1 class="reveal" style="--delay:60ms">Champions EV calculator</h1>
+              <p class="reveal" style="--delay:110ms">
+                Convert Showdown EVs into the new ${MAX_TOTAL_CHAMPIONS}-point Champions format
+                with live sliders and instant set parsing.
+              </p>
+            </div>
+            <div class="top-actions">
+              <article class="action-menu reveal" style="--delay:20ms">
+                <button class="action-trigger" type="button" aria-haspopup="true">
+                  <span>Creator</span>
+                  <span class="action-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="action-panel">
+                  <h3>Creator</h3>
+                  <p class="action-copy">${escapeHtml(CREATOR_GITHUB_HANDLE)}</p>
+                  <a
+                    class="footer-link"
+                    href="${escapeHtml(CREATOR_GITHUB_URL)}"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    GitHub
+                  </a>
+                </div>
+              </article>
+              <article class="action-menu align-right reveal" style="--delay:80ms">
+                <button class="action-trigger" type="button" aria-haspopup="true">
+                  <span>Donate</span>
+                  <span class="action-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="action-panel">
+                  <h3>Donate</h3>
+                  <p class="action-copy ${DONATION_URL ? "" : "muted"}"${DONATION_URL ? "" : ` id="donation-copy"`}>
+                    ${escapeHtml(donationCopy)}
+                  </p>
+                  ${
+                    DONATION_URL
+                      ? `<a class="footer-link primary" href="${escapeHtml(DONATION_URL)}" target="_blank" rel="noreferrer">${escapeHtml(donationLabel)}</a>`
+                      : `<span class="chip">Set PAYPAL_URL</span>`
+                  }
+                </div>
+              </article>
+            </div>
+          </div>
           <div class="hero-grid">
             <section class="summary-card reveal" style="--delay:180ms" aria-labelledby="summary-title">
               <div class="summary-label">
@@ -1062,7 +1251,7 @@ export function renderHomePage({
 
               <div class="toolbar">
                 <div class="button-row">
-                  <button class="ghost-btn" id="reset-btn" type="reset">Reset</button>
+                  <button class="ghost-btn" id="reset-btn" type="button">Reset</button>
                 </div>
                 <a
                   class="share-link"
@@ -1076,42 +1265,19 @@ export function renderHomePage({
             </form>
           </section>
         </main>
-
-        <section class="footer-grid">
-          <article class="footer-card reveal" style="--delay:420ms">
-            <h3>Creator</h3>
-            <div class="footer-inline">
-              <p>
-                Built by <strong>${escapeHtml(CREATOR_GITHUB_HANDLE)}</strong>.
-              </p>
-              <a
-                class="footer-link icon-only"
-                href="${escapeHtml(CREATOR_GITHUB_URL)}"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="View GitHub profile"
-                title="View GitHub profile"
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49C4 14.09 3.48 13.23 3.32 12.78c-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.52 7.52 0 0 1 8 4.73c.68 0 1.37.09 2.01.27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
-                </svg>
-              </a>
-            </div>
-          </article>
-          <article class="footer-card reveal" style="--delay:480ms">
-            <h3>Donate</h3>
-            <p id="donation-copy">${escapeHtml(donationCopy)}</p>
-            <div class="footer-actions">
-              ${
-                DONATION_URL
-                  ? `<a class="footer-link primary" href="${escapeHtml(DONATION_URL)}" target="_blank" rel="noreferrer">${escapeHtml(donationLabel)}</a>`
-                  : `<span class="chip">Set PAYPAL_URL to enable</span>`
-              }
-            </div>
-          </article>
-        </section>
       </div>
     </div>
+
+    <dialog class="reset-modal" id="reset-modal" aria-labelledby="reset-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="reset-modal-title">Reset all values?</h3>
+        <p>This will clear the sliders and pasted Showdown set.</p>
+        <div class="reset-modal-actions">
+          <button class="ghost-btn" id="reset-cancel-btn" type="button">Cancel</button>
+          <button class="primary-btn" id="reset-confirm-btn" type="button">Reset now</button>
+        </div>
+      </div>
+    </dialog>
 
     <script type="module" nonce="${escapeHtml(scriptNonce)}">
       const factor = ${JSON.stringify(EV_TO_CHAMPION_FACTOR)};
@@ -1128,6 +1294,10 @@ export function renderHomePage({
       const evTotal = document.querySelector("#ev-total");
       const evHint = document.querySelector("#ev-hint");
       const shareLink = document.querySelector("#share-link");
+      const resetButton = document.querySelector("#reset-btn");
+      const resetModal = document.querySelector("#reset-modal");
+      const resetCancelButton = document.querySelector("#reset-cancel-btn");
+      const resetConfirmButton = document.querySelector("#reset-confirm-btn");
       const showdownSetInput = document.querySelector("#showdown-set");
       const showdownStatus = document.querySelector("#showdown-status");
 
@@ -1440,12 +1610,45 @@ export function renderHomePage({
         compute();
       }
 
+      function openResetModal() {
+        if (typeof resetModal.showModal === "function") {
+          resetModal.showModal();
+          return;
+        }
+
+        resetModal.setAttribute("open", "");
+      }
+
+      function closeResetModal() {
+        if (typeof resetModal.close === "function") {
+          resetModal.close();
+          return;
+        }
+
+        resetModal.removeAttribute("open");
+      }
+
       form.addEventListener("input", (event) => {
         const target = event.target;
         if (target instanceof HTMLInputElement && statKeys.includes(target.id)) {
           enforceBudgetFromInput(target.id);
         }
         compute();
+      });
+      resetButton.addEventListener("click", () => {
+        openResetModal();
+      });
+      resetCancelButton.addEventListener("click", () => {
+        closeResetModal();
+      });
+      resetConfirmButton.addEventListener("click", () => {
+        closeResetModal();
+        form.reset();
+      });
+      resetModal.addEventListener("click", (event) => {
+        if (event.target === resetModal) {
+          closeResetModal();
+        }
       });
       form.addEventListener("reset", () => {
         window.requestAnimationFrame(compute);
