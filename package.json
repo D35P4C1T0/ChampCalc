@@ -6,12 +6,12 @@
   "description": "Mobile-first EV calculator with Showdown set parsing",
   "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch src/local-server.ts",
     "build": "tsc --project tsconfig.json",
-    "start": "node dist/server.js",
+    "start": "node dist/local-server.js",
     "check": "tsc --project tsconfig.test.json",
     "test": "node --import tsx --test test/**/*.test.ts"
   },
@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/node": "^25.5.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vercel": "^50.39.0"
   }
 }

@@ -3,7 +3,8 @@
     "target": "ES2024",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2024"],
+    "lib": ["ES2024", "DOM"],
+    "types": ["node"],
     "rootDir": ".",
     "outDir": "./dist",
     "strict": true,
@@ -19,5 +20,5 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*.ts", "api/**/*.ts"]
+  "include": ["*.ts", "src/**/*.ts", "api/**/*.ts"]
 }

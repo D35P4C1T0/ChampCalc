@@ -24,12 +24,20 @@ const initialStats = [
 ] as const;
 
 const EV_STEP = 1;
+const PAGE_TITLE = "ChampCalc | Pokemon Champions EV Calculator";
+const PAGE_DESCRIPTION =
+  "Convert Pokemon Showdown EV spreads into the new 66-point Pokemon Champions format with live sliders and built-in set parsing.";
+const SITE_NAME = "ChampCalc";
 
 interface RenderHomePageOptions {
+  pageUrl?: string;
   scriptNonce: string;
 }
 
-export function renderHomePage({ scriptNonce }: RenderHomePageOptions): string {
+export function renderHomePage({
+  pageUrl,
+  scriptNonce,
+}: RenderHomePageOptions): string {
   const statCards = initialStats
     .map(
       (stat, index) => `
@@ -66,17 +74,44 @@ export function renderHomePage({ scriptNonce }: RenderHomePageOptions): string {
   const donationCopy = DONATION_URL
     ? "A PayPal donation link is configured for this deployment."
     : "Set PAYPAL_URL to enable the donation button.";
+  const canonicalUrl = pageUrl ? escapeHtml(pageUrl) : null;
+  const structuredData = escapeHtml(JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    applicationCategory: "UtilitiesApplication",
+    author: {
+      "@type": "Person",
+      name: CREATOR_GITHUB_HANDLE,
+      url: CREATOR_GITHUB_URL,
+    },
+    description: PAGE_DESCRIPTION,
+    name: SITE_NAME,
+    operatingSystem: "Web",
+    url: pageUrl,
+  }));
 
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="${escapeHtml(PAGE_DESCRIPTION)}" />
+    <meta name="robots" content="index,follow" />
     <meta name="theme-color" content="#08121b" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#08121b" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Champions EV calculator</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />
+    <meta property="og:title" content="${escapeHtml(PAGE_TITLE)}" />
+    <meta property="og:description" content="${escapeHtml(PAGE_DESCRIPTION)}" />
+    ${canonicalUrl ? `<meta property="og:url" content="${canonicalUrl}" />` : ""}
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="${escapeHtml(PAGE_TITLE)}" />
+    <meta name="twitter:description" content="${escapeHtml(PAGE_DESCRIPTION)}" />
+    ${canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}" />` : ""}
+    <title>${escapeHtml(PAGE_TITLE)}</title>
+    <script type="application/ld+json" nonce="${escapeHtml(scriptNonce)}">${structuredData}</script>
     <style>
       :root,
       html,

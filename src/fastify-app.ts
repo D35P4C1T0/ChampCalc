@@ -8,11 +8,7 @@ import {
 } from "./http/security.js";
 import { validationErrorBody } from "./http/validation.js";
 
-export async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify({
-    logger: true,
-  });
-
+export function configureApp(app: FastifyInstance): FastifyInstance {
   app.addHook("onSend", async (_request, reply, payload) => {
     for (const [key, value] of Object.entries(COMMON_SECURITY_HEADERS)) {
       reply.header(key, value);
@@ -37,7 +33,13 @@ export async function buildApp(): Promise<FastifyInstance> {
     });
   });
 
-  await registerRoutes(app);
+  registerRoutes(app);
 
   return app;
+}
+
+export function buildApp(): FastifyInstance {
+  return configureApp(Fastify({
+    logger: true,
+  }));
 }

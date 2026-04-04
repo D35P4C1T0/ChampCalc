@@ -37,10 +37,14 @@ export function htmlResponse(
 
 export async function readJsonBody(request: Request): Promise<unknown> {
   try {
-    return await request.json();
+    return await readRequestJson(request);
   } catch {
     return undefined;
   }
+}
+
+async function readRequestJson(request: Request): Promise<unknown> {
+  return await (request as Request & { json(): Promise<unknown> }).json();
 }
 
 export function handleVercelError(error: unknown): Response {

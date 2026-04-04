@@ -12,17 +12,17 @@ It converts legacy EV spreads into the new 66-point format, supports live slider
 - deterministic point distribution so `516 EVs` can resolve cleanly to `66`
 - live Showdown `EVs:` line parsing
 - optional PayPal donation button via environment variable
-- Vercel-native `api/` entrypoints plus local Fastify development
+- Fastify app for local development and Vercel backend deployment
 - unit tests for conversion, HTTP behavior, and Vercel handlers
 
 ## Stack
 
 - Node.js
 - pnpm
-- Fastify
 - TypeScript
 - Zod
-- Vercel Functions
+- Fastify
+- Vercel
 
 ## Requirements
 
@@ -63,8 +63,8 @@ This folder is ready to be imported into Vercel as the project root.
 
 What is already configured:
 
-- `api/` contains Vercel-native TypeScript functions
-- `vercel.json` rewrites `/` to the homepage function and `/health` to the health handler
+- `index.ts` is the Fastify entrypoint Vercel will boot
+- `src/local-server.ts` runs the same Fastify app for local development
 - the homepage is rendered server-side so `PAYPAL_URL` can stay an environment variable
 
 In Vercel:
@@ -73,7 +73,7 @@ In Vercel:
 2. Set `PAYPAL_URL` if you want the donation button enabled.
 3. Deploy.
 
-Local Vercel-style routes:
+Application routes:
 
 - `/`
 - `/health`
@@ -133,14 +133,9 @@ Accepts a pasted Showdown set and extracts the EV line.
 ## Project structure
 
 ```text
-api/
-  convert.ts
-  health.ts
-  index.ts
-  parse-showdown.ts
 src/
-  app.ts
-  server.ts
+  local-server.ts
+  fastify-app.ts
   config/
   contracts/
   domain/
