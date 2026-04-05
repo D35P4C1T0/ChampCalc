@@ -29,6 +29,18 @@ const PAGE_DESCRIPTION =
   "Convert Pokemon Showdown EV spreads into the new 66-point Pokemon Champions format with live sliders and built-in set parsing.";
 const SITE_NAME = "ChampCalc";
 const PROJECT_GITHUB_URL = "https://github.com/D35P4C1T0/ChampCalc";
+const PAYPAL_ICON = `
+  <svg class="paypal-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path
+      fill="#003087"
+      d="M9.24 3.33A1 1 0 0 1 10.22 2.5h5.19c1.75 0 3.03.39 3.85 1.16.82.78 1.11 1.92.87 3.43-.27 1.7-.95 3.03-2.04 3.98-1.08.95-2.52 1.42-4.33 1.42h-1.83a.75.75 0 0 0-.74.62l-.76 4.79a.84.84 0 0 1-.83.7H6.35a.62.62 0 0 1-.61-.73L9.24 3.33Z"
+    />
+    <path
+      fill="#009CDE"
+      d="M11.18 5.28a.86.86 0 0 1 .85-.72h3.66c1.23 0 2.15.27 2.73.81.58.54.79 1.35.62 2.42-.18 1.15-.65 2.05-1.39 2.69-.75.65-1.74.97-2.98.97H13.2a.78.78 0 0 0-.77.65L11.7 16.7a.78.78 0 0 1-.77.65H8.57l2.61-12.07Z"
+    />
+  </svg>
+`;
 
 interface RenderHomePageOptions {
   pageUrl?: string;
@@ -42,15 +54,41 @@ export function renderHomePage({
   const statCards = initialStats
     .map(
       (stat, index) => `
-        <label class="stat-card reveal" style="--delay:${index * 60}ms" for="${stat.key}">
-          <span class="stat-meta">
-            <span class="stat-name">${escapeHtml(stat.label)}</span>
+        <div class="stat-card reveal" style="--delay:${index * 60}ms">
+          <div class="stat-meta">
+            <label class="stat-name" for="${stat.key}">${escapeHtml(stat.label)}</label>
             <span class="stat-value-wrap">
-              <span class="ev-pill"><strong id="${stat.key}-value">${MIN_EV}</strong><span>EV</span></span>
+              <span
+                class="ev-editor"
+                data-ev-editor="${stat.key}"
+                data-ev-label="${escapeHtml(stat.label)}"
+              >
+                <button
+                  class="ev-pill"
+                  data-ev-pill="${stat.key}"
+                  type="button"
+                  aria-label="Edit ${escapeHtml(stat.label)} EVs"
+                >
+                  <strong id="${stat.key}-value">${MIN_EV}</strong>
+                  <span>EV</span>
+                </button>
+                <input
+                  class="ev-edit"
+                  id="${stat.key}-edit"
+                  data-ev-edit="${stat.key}"
+                  type="number"
+                  inputmode="numeric"
+                  min="${MIN_EV}"
+                  max="${MAX_EV}"
+                  step="${EV_STEP}"
+                  value="${MIN_EV}"
+                  aria-label="${escapeHtml(stat.label)} EVs"
+                />
+              </span>
               <output id="${stat.key}-result" for="${stat.key}">0</output>
             </span>
-          </span>
-          <span class="slider-wrap">
+          </div>
+          <div class="slider-wrap">
             <input
               id="${stat.key}"
               name="${stat.key}"
@@ -64,8 +102,8 @@ export function renderHomePage({
               <span>${MIN_EV}</span>
               <span>${MAX_EV}</span>
             </span>
-          </span>
-        </label>`,
+          </div>
+        </div>`,
     )
     .join("");
 
@@ -206,7 +244,7 @@ export function renderHomePage({
         padding:
           max(0.5rem, env(safe-area-inset-top))
           0
-          max(0.75rem, env(safe-area-inset-bottom));
+          0;
       }
 
       .shell {
@@ -251,6 +289,8 @@ export function renderHomePage({
       .hero-head {
         display: grid;
         gap: 0.75rem;
+        position: relative;
+        z-index: 7;
       }
 
       .hero-copy {
@@ -269,6 +309,10 @@ export function renderHomePage({
 
       .action-menu {
         position: relative;
+      }
+
+      .action-menu[data-open="true"] {
+        z-index: 8;
       }
 
       .action-trigger {
@@ -306,6 +350,10 @@ export function renderHomePage({
 
       .action-panel {
         display: none;
+        position: absolute;
+        top: calc(100% + 0.35rem);
+        left: 0;
+        z-index: 6;
         gap: 0.6rem;
         min-width: 14rem;
         padding: 0.8rem;
@@ -314,6 +362,11 @@ export function renderHomePage({
         background: var(--panel-strong);
         box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
         will-change: opacity, transform;
+      }
+
+      .action-menu.align-right .action-panel {
+        left: auto;
+        right: 0;
       }
 
       .action-menu[data-open="true"] .action-panel {
@@ -532,11 +585,27 @@ export function renderHomePage({
           box-shadow var(--motion-medium) var(--ease-out-soft);
       }
 
+      .showdown-summary {
+        list-style: none;
+        cursor: pointer;
+      }
+
+      .showdown-summary::-webkit-details-marker {
+        display: none;
+      }
+
       .showdown-head {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 1rem;
+      }
+
+      .showdown-title-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        min-width: 0;
       }
 
       .showdown-title {
@@ -548,6 +617,21 @@ export function renderHomePage({
         color: var(--muted);
         font-size: 0.76rem;
         text-align: right;
+      }
+
+      .showdown-caret {
+        color: var(--muted);
+        font-size: 0.78rem;
+        transition: transform var(--motion-medium) var(--ease-out-soft);
+      }
+
+      .showdown-panel[open] .showdown-caret {
+        transform: rotate(180deg);
+      }
+
+      .showdown-body {
+        display: grid;
+        gap: 0.5rem;
       }
 
       .showdown-panel textarea {
@@ -616,14 +700,24 @@ export function renderHomePage({
       }
 
       .stat-name {
+        display: inline-block;
         font-size: 0.94rem;
         font-weight: 700;
+        cursor: pointer;
+      }
+
+      .ev-editor {
+        position: relative;
+        display: inline-grid;
+        min-width: 4.9rem;
       }
 
       .ev-pill {
         display: inline-flex;
         align-items: baseline;
+        justify-content: center;
         gap: 0.35rem;
+        min-height: auto;
         padding: 0.34rem 0.56rem;
         border: 1px solid var(--line);
         border-radius: 999px;
@@ -631,12 +725,73 @@ export function renderHomePage({
         color: var(--muted);
         font-size: 0.74rem;
         font-weight: 700;
+        box-shadow: none;
+        cursor: text;
+      }
+
+      .ev-pill:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: var(--line-strong);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .ev-pill:focus-visible {
+        outline: 2px solid rgba(141, 200, 255, 0.55);
+        outline-offset: 2px;
       }
 
       .ev-pill strong {
         color: var(--text);
         font-size: 0.88rem;
         font-variant-numeric: tabular-nums;
+      }
+
+      .ev-edit {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0.34rem 0.56rem;
+        border: 1px solid rgba(103, 240, 194, 0.34);
+        border-radius: 999px;
+        outline: none;
+        background: rgba(3, 10, 16, 0.92);
+        color: var(--text);
+        font: 700 0.88rem/1 var(--font-body);
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(0.98);
+        transition:
+          opacity var(--motion-fast) ease,
+          transform var(--motion-fast) ease,
+          border-color var(--motion-fast) ease,
+          box-shadow var(--motion-fast) ease;
+      }
+
+      .ev-edit:focus {
+        border-color: rgba(103, 240, 194, 0.52);
+        box-shadow: 0 0 0 4px rgba(103, 240, 194, 0.08);
+      }
+
+      .ev-edit::-webkit-outer-spin-button,
+      .ev-edit::-webkit-inner-spin-button {
+        margin: 0;
+        -webkit-appearance: none;
+      }
+
+      .ev-editor[data-editing="true"] .ev-pill {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(0.98);
+      }
+
+      .ev-editor[data-editing="true"] .ev-edit {
+        opacity: 1;
+        pointer-events: auto;
+        transform: scale(1);
       }
 
       .slider-wrap {
@@ -802,6 +957,14 @@ export function renderHomePage({
         fill: currentColor;
       }
 
+      .paypal-mark {
+        display: block;
+        width: 1.08rem;
+        height: 1.08rem;
+        overflow: visible;
+        shape-rendering: geometricPrecision;
+      }
+
       .chip.icon-only {
         width: 3rem;
         min-width: 3rem;
@@ -907,6 +1070,43 @@ export function renderHomePage({
         margin: 0;
         color: var(--muted);
         line-height: 1.5;
+      }
+
+      .modal-field {
+        display: grid;
+        gap: 0.45rem;
+      }
+
+      .modal-label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .modal-input {
+        width: 100%;
+        margin: 0;
+        padding: 0.82rem 0.9rem;
+        border: 1px solid rgba(103, 240, 194, 0.26);
+        border-radius: var(--radius-sm);
+        outline: none;
+        background: rgba(3, 10, 16, 0.86);
+        color: var(--text);
+        font: 700 1rem/1.1 var(--font-body);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .modal-input:focus {
+        border-color: rgba(103, 240, 194, 0.52);
+        box-shadow: 0 0 0 4px rgba(103, 240, 194, 0.08);
+      }
+
+      .modal-input::-webkit-outer-spin-button,
+      .modal-input::-webkit-inner-spin-button {
+        margin: 0;
+        -webkit-appearance: none;
       }
 
       .reset-modal-actions {
@@ -1058,7 +1258,7 @@ export function renderHomePage({
           padding:
             env(safe-area-inset-top)
             0
-            max(0.35rem, env(safe-area-inset-bottom));
+            0;
         }
 
         .shell {
@@ -1070,27 +1270,38 @@ export function renderHomePage({
         }
 
         .hero {
-          padding: 0.55rem 0.65rem 0.4rem;
+          padding: 0.68rem 0.78rem 0.48rem;
+        }
+
+        .hero-head {
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: start;
+          gap: 0.52rem 0.72rem;
         }
 
         .hero h1 {
-          font-size: clamp(1.85rem, 9vw, 2.5rem);
-          line-height: 0.96;
+          font-size: clamp(1.4rem, 6.8vw, 1.95rem);
+          line-height: 0.98;
         }
 
         .hero-subtitle {
           display: none;
         }
 
+        .top-actions {
+          justify-self: end;
+          align-self: start;
+        }
+
         .hero-grid {
           position: sticky;
           top: max(0.35rem, env(safe-area-inset-top));
-          z-index: 4;
-          margin-top: 0.45rem;
+          z-index: 3;
+          margin-top: 0.55rem;
         }
 
         .summary-card {
-          padding: 0.68rem 0.72rem;
+          padding: 0.76rem 0.8rem;
           border-radius: 18px;
           background: rgba(10, 22, 34, 0.92);
         }
@@ -1136,11 +1347,11 @@ export function renderHomePage({
         }
 
         .app {
-          padding: 0 0.65rem 0.65rem;
+          padding: 0 0.78rem 0.78rem;
         }
 
         .calculator {
-          padding: 0.65rem;
+          padding: 0.74rem;
           border-radius: 18px;
         }
 
@@ -1165,7 +1376,7 @@ export function renderHomePage({
 
         .showdown-panel {
           gap: 0.42rem;
-          padding: 0.62rem;
+          padding: 0.68rem;
         }
 
         .showdown-head {
@@ -1173,6 +1384,10 @@ export function renderHomePage({
           grid-template-columns: minmax(0, 1fr) auto;
           align-items: center;
           gap: 0.25rem 0.6rem;
+        }
+
+        .showdown-title-wrap {
+          gap: 0.42rem;
         }
 
         .showdown-title {
@@ -1192,13 +1407,13 @@ export function renderHomePage({
         }
 
         .stat-grid {
-          gap: 0.5rem;
-          margin-top: 0.6rem;
+          gap: 0.56rem;
+          margin-top: 0.66rem;
         }
 
         .stat-card {
           gap: 0.38rem;
-          padding: 0.58rem 0.62rem;
+          padding: 0.64rem 0.68rem;
         }
 
         .stat-meta {
@@ -1272,6 +1487,8 @@ export function renderHomePage({
         .top-actions {
           display: grid;
           gap: 0.55rem;
+          position: relative;
+          z-index: 6;
         }
 
         .action-trigger {
@@ -1281,12 +1498,33 @@ export function renderHomePage({
         }
 
         .action-panel {
+          width: min(16rem, calc(100vw - 1.3rem));
           min-width: 0;
-          margin-top: 0.45rem;
         }
 
         .reset-modal-content {
           padding: 0.9rem;
+        }
+      }
+
+      @media (max-width: 820px) {
+        .action-caret {
+          display: none;
+        }
+
+        .top-actions {
+          grid-template-columns: repeat(2, auto);
+          justify-content: end;
+        }
+
+        .action-trigger {
+          min-width: 3.1rem;
+          min-height: 3.1rem;
+          padding: 0.6rem 0.72rem;
+          justify-content: center;
+          border-radius: 1rem;
+          font-size: 0.72rem;
+          letter-spacing: 0.04em;
         }
       }
 
@@ -1296,7 +1534,7 @@ export function renderHomePage({
           padding:
             max(0.9rem, env(safe-area-inset-top))
             0
-            max(1.2rem, env(safe-area-inset-bottom));
+            0;
         }
 
         .hero {
@@ -1364,13 +1602,12 @@ export function renderHomePage({
               </p>
             </div>
             <div class="top-actions">
-              <article class="action-menu reveal" style="--delay:20ms" data-action-menu>
+              <article class="action-menu reveal" style="--delay:20ms" data-action-menu data-action-kind="creator">
                 <button class="action-trigger" type="button" aria-haspopup="true" aria-expanded="false">
                   <span>Creator</span>
                   <span class="action-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="action-panel">
-                  <h3>Creator</h3>
                   <div class="action-row">
                     <p class="action-copy">
                       <a
@@ -1397,13 +1634,12 @@ export function renderHomePage({
                   </div>
                 </div>
               </article>
-              <article class="action-menu align-right reveal" style="--delay:80ms" data-action-menu>
+              <article class="action-menu align-right reveal" style="--delay:80ms" data-action-menu data-action-kind="donate">
                 <button class="action-trigger" type="button" aria-haspopup="true" aria-expanded="false">
                   <span>Donate</span>
                   <span class="action-caret" aria-hidden="true">▾</span>
                 </button>
                 <div class="action-panel">
-                  <h3>Donate</h3>
                   <div class="action-row">
                     <p class="action-copy ${DONATION_URL ? "" : "muted"}" id="donation-copy">
                       PayPal
@@ -1419,9 +1655,7 @@ export function renderHomePage({
                           aria-label="${escapeHtml(donationLabel)} with PayPal"
                           title="${escapeHtml(donationLabel)} with PayPal"
                         >
-                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                            <path d="M7.16 20.33H3.89a.6.6 0 0 1-.59-.7L6.42 1.22a.83.83 0 0 1 .82-.69h7.49c2.57 0 4.46.54 5.62 1.61 1.08.99 1.5 2.46 1.23 4.37l-.02.14v.4l.31.17c.26.14.47.31.62.52.53.74.69 1.68.49 2.87-.23 1.38-.78 2.56-1.64 3.5-.79.86-1.8 1.51-3 1.92-1.16.39-2.48.59-3.92.59h-.75c-.54 0-.99.4-1.08.94l-.08.42-.58 3.58-.03.13a.84.84 0 0 1-.82.67H8.52l-.36-.02-.05-.01-.95-.02Zm10.75-13.39c-.06.41-.16.78-.3 1.12-.67 1.58-2.22 2.4-4.49 2.4h-1.15a.83.83 0 0 0-.82.69l-.58 3.61-.16 1.02-.02.12c-.07.43-.44.75-.88.75H7.3l.52-3.2 1.12-6.92a.83.83 0 0 1 .82-.69h1.71c1.13 0 2.01.08 2.61.24.55.14.98.38 1.29.71.33.35.55.77.64 1.27.1.52.1 1.14 0 1.85ZM9.36 5.19 8.4 11.11l-.02.13a.83.83 0 0 1-.82.69H5.3a.6.6 0 0 1-.59-.7L6.06 2.7a.83.83 0 0 1 .82-.69h3.84c1.77 0 3.03.37 3.76 1.09.36.36.59.78.71 1.25.13.5.13 1.1 0 1.84-.12.73-.36 1.33-.71 1.79-.75.98-2.06 1.47-3.98 1.47H9.36Z"></path>
-                          </svg>
+                          ${PAYPAL_ICON}
                         </a>`
                       : `<button
                           class="chip icon-only"
@@ -1430,9 +1664,7 @@ export function renderHomePage({
                           aria-label="${escapeHtml(donationLabel)}"
                           title="${escapeHtml(donationLabel)}"
                         >
-                          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                            <path d="M7.16 20.33H3.89a.6.6 0 0 1-.59-.7L6.42 1.22a.83.83 0 0 1 .82-.69h7.49c2.57 0 4.46.54 5.62 1.61 1.08.99 1.5 2.46 1.23 4.37l-.02.14v.4l.31.17c.26.14.47.31.62.52.53.74.69 1.68.49 2.87-.23 1.38-.78 2.56-1.64 3.5-.79.86-1.8 1.51-3 1.92-1.16.39-2.48.59-3.92.59h-.75c-.54 0-.99.4-1.08.94l-.08.42-.58 3.58-.03.13a.84.84 0 0 1-.82.67H8.52l-.36-.02-.05-.01-.95-.02Zm10.75-13.39c-.06.41-.16.78-.3 1.12-.67 1.58-2.22 2.4-4.49 2.4h-1.15a.83.83 0 0 0-.82.69l-.58 3.61-.16 1.02-.02.12c-.07.43-.44.75-.88.75H7.3l.52-3.2 1.12-6.92a.83.83 0 0 1 .82-.69h1.71c1.13 0 2.01.08 2.61.24.55.14.98.38 1.29.71.33.35.55.77.64 1.27.1.52.1 1.14 0 1.85ZM9.36 5.19 8.4 11.11l-.02.13a.83.83 0 0 1-.82.69H5.3a.6.6 0 0 1-.59-.7L6.06 2.7a.83.83 0 0 1 .82-.69h3.84c1.77 0 3.03.37 3.76 1.09.36.36.59.78.71 1.25.13.5.13 1.1 0 1.84-.12.73-.36 1.33-.71 1.79-.75.98-2.06 1.47-3.98 1.47H9.36Z"></path>
-                          </svg>
+                          ${PAYPAL_ICON}
                         </button>`
                   }
                   </div>
@@ -1475,18 +1707,25 @@ export function renderHomePage({
             </div>
 
             <form id="calculator-form" novalidate>
-              <label class="showdown-panel" for="showdown-set">
-                <span class="showdown-head">
-                  <span class="showdown-title">Paste a Showdown set</span>
-                  <span class="showdown-status" id="showdown-status">Waiting for EVs line</span>
-                </span>
-                <textarea
-                  id="showdown-set"
-                  name="showdownSet"
-                  spellcheck="false"
-                  placeholder="EVs: 244 HP / 4 Def / 252 SpA / 4 SpD / 4 Spe"
-                ></textarea>
-              </label>
+              <details class="showdown-panel">
+                <summary class="showdown-summary">
+                  <span class="showdown-head">
+                    <span class="showdown-title-wrap">
+                      <span class="showdown-title">Paste a Showdown set</span>
+                      <span class="showdown-caret" aria-hidden="true">▾</span>
+                    </span>
+                    <span class="showdown-status" id="showdown-status">Waiting for EVs line</span>
+                  </span>
+                </summary>
+                <div class="showdown-body">
+                  <textarea
+                    id="showdown-set"
+                    name="showdownSet"
+                    spellcheck="false"
+                    placeholder="EVs: 244 HP / 4 Def / 252 SpA / 4 SpD / 4 Spe"
+                  ></textarea>
+                </div>
+              </details>
 
               <div class="stat-grid">
                 ${statCards}
@@ -1527,6 +1766,74 @@ export function renderHomePage({
       </div>
     </dialog>
 
+    <dialog class="reset-modal" id="creator-modal" aria-labelledby="creator-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="creator-modal-title">Creator</h3>
+        <div class="action-row">
+          <p class="action-copy">
+            <a
+              class="action-link"
+              href="${escapeHtml(CREATOR_GITHUB_URL)}"
+              target="_blank"
+              rel="noreferrer"
+            >
+              ${escapeHtml(CREATOR_GITHUB_HANDLE)}
+            </a>
+          </p>
+          <a
+            class="footer-link icon-only"
+            href="${escapeHtml(PROJECT_GITHUB_URL)}"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="View ChampCalc on GitHub"
+            title="View ChampCalc on GitHub"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+            </svg>
+          </a>
+        </div>
+        <div class="reset-modal-actions">
+          <button class="primary-btn" id="creator-close-btn" type="button">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="reset-modal" id="donate-info-modal" aria-labelledby="donate-info-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="donate-info-modal-title">Donate</h3>
+        <div class="action-row">
+          <p class="action-copy ${DONATION_URL ? "" : "muted"}">PayPal</p>
+          ${
+            DONATION_URL
+              ? `<a
+                  class="chip primary icon-only"
+                  id="donate-modal-chip"
+                  href="${escapeHtml(DONATION_URL)}"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="${escapeHtml(donationLabel)} with PayPal"
+                  title="${escapeHtml(donationLabel)} with PayPal"
+                >
+                  ${PAYPAL_ICON}
+                </a>`
+              : `<button
+                  class="chip icon-only"
+                  id="donate-modal-chip"
+                  type="button"
+                  aria-label="${escapeHtml(donationLabel)}"
+                  title="${escapeHtml(donationLabel)}"
+                >
+                  ${PAYPAL_ICON}
+                </button>`
+          }
+        </div>
+        <div class="reset-modal-actions">
+          <button class="primary-btn" id="donate-info-close-btn" type="button">Close</button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog class="reset-modal" id="export-modal" aria-labelledby="export-modal-title">
       <div class="reset-modal-content">
         <h3 id="export-modal-title">Export to Champions is still in progress</h3>
@@ -1547,6 +1854,32 @@ export function renderHomePage({
       </div>
     </dialog>
 
+    <dialog class="reset-modal" id="ev-modal" aria-labelledby="ev-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="ev-modal-title">Set EV value</h3>
+        <p id="ev-modal-copy">Type a precise EV value. If the total overflows, it will be adjusted automatically.</p>
+        <label class="modal-field" for="ev-modal-input">
+          <span class="modal-label">EV value</span>
+          <input
+            class="modal-input"
+            id="ev-modal-input"
+            type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            enterkeyhint="done"
+            min="${MIN_EV}"
+            max="${MAX_EV}"
+            step="${EV_STEP}"
+            value="${MIN_EV}"
+          />
+        </label>
+        <div class="reset-modal-actions">
+          <button class="ghost-btn" id="ev-modal-cancel-btn" type="button">Cancel</button>
+          <button class="primary-btn" id="ev-modal-confirm-btn" type="button">Apply</button>
+        </div>
+      </div>
+    </dialog>
+
     <script type="module" nonce="${escapeHtml(scriptNonce)}">
       const factor = ${JSON.stringify(EV_TO_CHAMPION_FACTOR)};
       const maxTotal = ${JSON.stringify(MAX_TOTAL_CHAMPIONS)};
@@ -1563,12 +1896,22 @@ export function renderHomePage({
       const evTotal = document.querySelector("#ev-total");
       const evHint = document.querySelector("#ev-hint");
       const donateChip = document.querySelector("#donate-chip");
+      const donateModalChip = document.querySelector("#donate-modal-chip");
       // Reserved for the future Export to Champions flow.
       // const shareLink = document.querySelector("#share-link");
+      const creatorModal = document.querySelector("#creator-modal");
+      const creatorCloseButton = document.querySelector("#creator-close-btn");
+      const donateInfoModal = document.querySelector("#donate-info-modal");
+      const donateInfoCloseButton = document.querySelector("#donate-info-close-btn");
       const exportButton = document.querySelector("#export-btn");
       const resetButton = document.querySelector("#reset-btn");
       const donationModal = document.querySelector("#donation-modal");
       const donationCloseButton = document.querySelector("#donation-close-btn");
+      const evModal = document.querySelector("#ev-modal");
+      const evModalTitle = document.querySelector("#ev-modal-title");
+      const evModalInput = document.querySelector("#ev-modal-input");
+      const evModalCancelButton = document.querySelector("#ev-modal-cancel-btn");
+      const evModalConfirmButton = document.querySelector("#ev-modal-confirm-btn");
       const exportModal = document.querySelector("#export-modal");
       const exportCloseButton = document.querySelector("#export-close-btn");
       const resetModal = document.querySelector("#reset-modal");
@@ -1577,7 +1920,10 @@ export function renderHomePage({
       const showdownSetInput = document.querySelector("#showdown-set");
       const showdownStatus = document.querySelector("#showdown-status");
       const actionMenus = Array.from(document.querySelectorAll("[data-action-menu]"));
+      const evEditors = Array.from(document.querySelectorAll("[data-ev-editor]"));
       const modalCloseTimers = new WeakMap();
+      const compactActionUi = window.matchMedia("(max-width: 820px)");
+      let activeEvEditor = null;
 
       const showdownToInputKey = {
         HP: "hp",
@@ -1592,6 +1938,15 @@ export function renderHomePage({
         const input = document.getElementById(key);
         const parsed = Number.parseInt(input.value || "0", 10);
         return Number.isNaN(parsed) ? 0 : parsed;
+      }
+
+      function clampEvValue(value) {
+        const parsed = Number.parseInt(String(value ?? ""), 10);
+        if (Number.isNaN(parsed)) {
+          return ${MIN_EV};
+        }
+
+        return Math.max(${MIN_EV}, Math.min(${MAX_EV}, parsed));
       }
 
       function readAllValues() {
@@ -1693,6 +2048,11 @@ export function renderHomePage({
         for (const [key, value] of Object.entries(values)) {
           const input = document.getElementById(key);
           input.value = String(value);
+
+          const preciseInput = document.querySelector('[data-ev-edit="' + key + '"]');
+          if (preciseInput instanceof HTMLInputElement) {
+            preciseInput.value = String(value);
+          }
         }
       }
 
@@ -1735,6 +2095,88 @@ export function renderHomePage({
       function enforceBudgetFromInput(changedKey) {
         const clamped = clampValuesToBudget(readAllValues(), changedKey);
         applyValues(clamped);
+      }
+
+      function setDirectEvValue(key, value) {
+        const nextValues = readAllValues();
+        nextValues[key] = clampEvValue(value);
+        const clamped = clampValuesToBudget(nextValues, key);
+        applyValues(clamped);
+        compute();
+      }
+
+      function setEvEditorOpen(editor, isOpen) {
+        editor.dataset.editing = isOpen ? "true" : "false";
+      }
+
+      function commitEvEditor(editor) {
+        const key = editor.dataset.evEditor;
+        const preciseInput = editor.querySelector("[data-ev-edit]");
+        if (!key || !(preciseInput instanceof HTMLInputElement)) {
+          return;
+        }
+
+        const nextValues = readAllValues();
+        nextValues[key] = clampEvValue(preciseInput.value);
+        const clamped = clampValuesToBudget(nextValues, key);
+        applyValues(clamped);
+        compute();
+        setEvEditorOpen(editor, false);
+      }
+
+      function cancelEvEditor(editor) {
+        const key = editor.dataset.evEditor;
+        const preciseInput = editor.querySelector("[data-ev-edit]");
+        if (!key || !(preciseInput instanceof HTMLInputElement)) {
+          return;
+        }
+
+        preciseInput.value = String(readValue(key));
+        setEvEditorOpen(editor, false);
+      }
+
+      function useEvModal() {
+        return compactActionUi.matches;
+      }
+
+      function openEvModal(editor) {
+        const key = editor.dataset.evEditor;
+        const label = editor.dataset.evLabel;
+        if (!key || !label || !(evModalInput instanceof HTMLInputElement) || !(evModalTitle instanceof HTMLElement)) {
+          return;
+        }
+
+        activeEvEditor = editor;
+        evModalTitle.textContent = "Set " + label + " EVs";
+        evModalInput.value = String(readValue(key));
+        openModal(evModal);
+
+        window.requestAnimationFrame(() => {
+          evModalInput.focus();
+          evModalInput.select();
+        });
+      }
+
+      function closeEvModal() {
+        closeModal(evModal);
+      }
+
+      function commitEvModal() {
+        if (!(activeEvEditor instanceof HTMLElement) || !(evModalInput instanceof HTMLInputElement)) {
+          return;
+        }
+
+        const key = activeEvEditor.dataset.evEditor;
+        if (!key) {
+          return;
+        }
+
+        const nextValues = readAllValues();
+        nextValues[key] = clampEvValue(evModalInput.value);
+        const clamped = clampValuesToBudget(nextValues, key);
+        applyValues(clamped);
+        compute();
+        closeEvModal();
       }
 
       /*
@@ -1902,10 +2344,18 @@ export function renderHomePage({
           window.clearTimeout(existingTimer);
         }
 
+        if (modal.hasAttribute("open") && modal.dataset.closing !== "true") {
+          return;
+        }
+
         modal.dataset.closing = "false";
 
         if (typeof modal.showModal === "function") {
-          modal.showModal();
+          try {
+            modal.showModal();
+          } catch {
+            modal.setAttribute("open", "");
+          }
         } else {
           modal.setAttribute("open", "");
         }
@@ -1947,6 +2397,10 @@ export function renderHomePage({
               activeElement.blur();
             }
           });
+        }
+
+        if (modal === evModal) {
+          activeEvEditor = null;
         }
       }
 
@@ -1996,6 +2450,21 @@ export function renderHomePage({
         }
       }
 
+      function useActionModals() {
+        return compactActionUi.matches;
+      }
+
+      function openActionModal(kind) {
+        if (kind === "creator") {
+          openModal(creatorModal);
+          return;
+        }
+
+        if (kind === "donate") {
+          openModal(donateInfoModal);
+        }
+      }
+
       form.addEventListener("input", (event) => {
         const target = event.target;
         if (target instanceof HTMLInputElement && statKeys.includes(target.id)) {
@@ -2003,6 +2472,66 @@ export function renderHomePage({
         }
         compute();
       });
+      for (const editor of evEditors) {
+        setEvEditorOpen(editor, false);
+
+        const trigger = editor.querySelector("[data-ev-pill]");
+        const preciseInput = editor.querySelector("[data-ev-edit]");
+        const key = editor.dataset.evEditor;
+
+        if (!(trigger instanceof HTMLButtonElement) || !(preciseInput instanceof HTMLInputElement) || !key) {
+          continue;
+        }
+
+        trigger.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (event.ctrlKey || event.metaKey) {
+            setDirectEvValue(key, ${MAX_EV});
+            return;
+          }
+
+          if (useEvModal()) {
+            openEvModal(editor);
+            return;
+          }
+
+          preciseInput.value = String(readValue(key));
+          setEvEditorOpen(editor, true);
+          window.requestAnimationFrame(() => {
+            preciseInput.focus();
+            preciseInput.select();
+          });
+        });
+
+        trigger.addEventListener("dblclick", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setDirectEvValue(key, ${MIN_EV});
+        });
+
+        preciseInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commitEvEditor(editor);
+            preciseInput.blur();
+            return;
+          }
+
+          if (event.key === "Escape") {
+            event.preventDefault();
+            cancelEvEditor(editor);
+            trigger.focus();
+          }
+        });
+
+        preciseInput.addEventListener("blur", () => {
+          if (editor.dataset.editing === "true") {
+            commitEvEditor(editor);
+          }
+        });
+      }
       exportButton.addEventListener("click", () => {
         openModal(exportModal);
       });
@@ -2011,11 +2540,42 @@ export function renderHomePage({
           openModal(donationModal);
         });
       }
+      if (donateModalChip instanceof HTMLButtonElement) {
+        donateModalChip.addEventListener("click", () => {
+          closeModal(donateInfoModal);
+          window.setTimeout(() => {
+            openModal(donationModal);
+          }, 220);
+        });
+      }
+      creatorCloseButton.addEventListener("click", () => {
+        closeModal(creatorModal);
+      });
+      donateInfoCloseButton.addEventListener("click", () => {
+        closeModal(donateInfoModal);
+      });
       resetButton.addEventListener("click", () => {
         openModal(resetModal);
       });
       donationCloseButton.addEventListener("click", () => {
         closeModal(donationModal);
+      });
+      evModalCancelButton.addEventListener("click", () => {
+        closeEvModal();
+      });
+      evModalConfirmButton.addEventListener("click", () => {
+        commitEvModal();
+      });
+      evModalInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          commitEvModal();
+        }
+
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeEvModal();
+        }
       });
       exportCloseButton.addEventListener("click", () => {
         closeModal(exportModal);
@@ -2027,7 +2587,7 @@ export function renderHomePage({
         closeModal(resetModal);
         form.reset();
       });
-      for (const modal of [resetModal, exportModal, donationModal]) {
+      for (const modal of [resetModal, creatorModal, donateInfoModal, exportModal, donationModal, evModal]) {
         modal.addEventListener("click", (event) => {
           if (event.target === modal) {
             closeModal(modal);
@@ -2040,8 +2600,20 @@ export function renderHomePage({
       }
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
+          if (donateInfoModal.hasAttribute("open")) {
+            closeModal(donateInfoModal);
+          }
+
+          if (creatorModal.hasAttribute("open")) {
+            closeModal(creatorModal);
+          }
+
           if (donationModal.hasAttribute("open")) {
             closeModal(donationModal);
+          }
+
+          if (evModal.hasAttribute("open")) {
+            closeModal(evModal);
           }
 
           if (exportModal.hasAttribute("open")) {
@@ -2063,6 +2635,12 @@ export function renderHomePage({
 
         trigger.addEventListener("click", (event) => {
           event.preventDefault();
+
+          if (useActionModals()) {
+            closeActionMenus();
+            openActionModal(menu.dataset.actionKind);
+            return;
+          }
 
           const isOpen = menu.dataset.open === "true";
           closeActionMenus(menu);
