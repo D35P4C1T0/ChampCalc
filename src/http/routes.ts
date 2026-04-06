@@ -11,8 +11,10 @@ import {
   convertEvToChampions,
 } from "../domain/ev-master.js";
 import {
+  buildApproximateLegacyEvLine,
+  buildChampionsStLine,
   parseShowdownEvs,
-  rewriteShowdownEvsLine,
+  rewriteShowdownTrainingLine,
 } from "../domain/showdown-parser.js";
 import { renderHomePage } from "../ui/home-page.js";
 import { buildHtmlContentSecurityPolicy } from "./security.js";
@@ -115,7 +117,7 @@ const showdownRequestSchema = {
 const showdownRewriteResponseSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["evs", "found", "result", "championsText"],
+  required: ["evs", "found", "result", "championsText", "legacyText"],
   properties: {
     evs: {
       ...resolvedEvInputSchema,
@@ -134,7 +136,12 @@ const showdownRewriteResponseSchema = {
     championsText: {
       type: "string",
       nullable: true,
-      description: "Original Showdown text with its EVs line rewritten to Champions-format values.",
+      description: "Original Showdown text with its training line rewritten as Champions STs.",
+    },
+    legacyText: {
+      type: "string",
+      nullable: true,
+      description: "Original Showdown text with its training line rewritten as approximate legacy EV breakpoints.",
     },
   },
 } as const;
@@ -185,7 +192,7 @@ export function registerRoutes(app: FastifyInstance): void {
       tags: ["conversion"],
       summary: "Convert legacy EVs to canonical Champions points",
       description:
-        "Accepts legacy EV values as query parameters and returns the canonical per-stat Champions point buckets plus over-cap metadata.",
+        "Accepts legacy EV values as query parameters, converts each stat independently with the level-50 breakpoint rule floor((EV + 4) / 8), preserves any leftover points below the 66-point cap, and returns the canonical Champions point buckets plus over-cap metadata.",
       querystring: evInputSchema,
       response: {
         200: convertResponseSchema,
@@ -207,7 +214,7 @@ export function registerRoutes(app: FastifyInstance): void {
       tags: ["conversion"],
       summary: "Convert EV payload to canonical Champions points",
       description:
-        "Accepts a JSON EV payload and returns the canonical per-stat Champions point buckets with total-point and over-cap metadata.",
+        "Accepts a JSON EV payload, converts each stat independently with the level-50 breakpoint rule floor((EV + 4) / 8), preserves any leftover points below the 66-point cap, and returns the canonical Champions point buckets with total-point and over-cap metadata.",
       body: evInputSchema,
       response: {
         200: convertResponseSchema,
@@ -227,9 +234,9 @@ export function registerRoutes(app: FastifyInstance): void {
   app.post("/api/parse-showdown", {
     schema: {
       tags: ["conversion"],
-      summary: "Rewrite a Showdown set into Champions EVs",
+      summary: "Rewrite a Showdown set into Champions STs or legacy EV equivalents",
       description:
-        "Accepts a full pasted Pokemon Showdown set, extracts its EV line, converts it into canonical Champions point buckets, and returns the rewritten set text.",
+        "Accepts a full pasted Pokemon Showdown set, extracts its EV line, converts it into canonical Champions point buckets with preserved leftover points, and returns the rewritten set text in both raw Champions ST and approximate legacy EV formats.",
       body: showdownRequestSchema,
       response: {
         200: showdownRewriteResponseSchema,
@@ -241,14 +248,10 @@ export function registerRoutes(app: FastifyInstance): void {
     const evs = parseShowdownEvs(text);
     const result = evs ? convertEvToChampions(evs) : null;
     const championsText = result
-      ? rewriteShowdownEvsLine(text, {
-          hp: result.hp,
-          attack: result.attack,
-          defense: result.defense,
-          specialAttack: result.specialAttack,
-          specialDefense: result.specialDefense,
-          speed: result.speed,
-        })
+      ? rewriteShowdownTrainingLine(text, buildChampionsStLine(result))
+      : null;
+    const legacyText = result
+      ? rewriteShowdownTrainingLine(text, buildApproximateLegacyEvLine(result))
       : null;
 
     return {
@@ -256,6 +259,7 @@ export function registerRoutes(app: FastifyInstance): void {
       found: evs !== null,
       result,
       championsText,
+      legacyText,
     };
   });
 }

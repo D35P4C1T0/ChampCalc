@@ -9,9 +9,11 @@ It converts legacy EV spreads into the new 66-point format, supports live slider
 - mobile-first UI tuned for iPhone and Android
 - real-time conversion into the 66-point Champions format
 - hard EV budget cap of `516`
-- deterministic point distribution so `516 EVs` can resolve cleanly to `66`
+- independent per-stat EV -> point conversion using `floor((EV + 4) / 8)`
+- faithful import behavior that preserves leftover points instead of auto-filling to `66`
 - live Showdown `EVs:` line parsing
-- full Showdown set rewriting with converted Champions EVs
+- full Showdown set rewriting with both Champions `STs:` and approximate legacy `EVs:` exports
+- export modal toggle for raw Champions STs or nearest old-style EV breakpoints
 - generated Swagger / OpenAPI documentation
 - public-safe validation errors for documented API routes
 - optional PayPal donation button via environment variable
@@ -120,6 +122,11 @@ curl "http://localhost:3000/api/convert?hp=252&attack=252&defense=12&specialAtta
 
 Returns both the original normalized input and the converted Champions result.
 
+Conversion note:
+
+- each stat is converted independently with `floor((EV + 4) / 8)`
+- leftover points are preserved rather than auto-spent to reach `66`
+
 ### `POST /api/convert`
 
 Accepts JSON:
@@ -139,9 +146,14 @@ Requests above `516` total EVs are rejected.
 
 Returns both the original normalized input and the converted Champions result.
 
+Conversion note:
+
+- each stat is converted independently with `floor((EV + 4) / 8)`
+- leftover points are preserved rather than auto-spent to reach `66`
+
 ### `POST /api/parse-showdown`
 
-Accepts a full pasted Showdown set, parses the `EVs:` line, converts it to Champions values, and returns the full set text with that line rewritten.
+Accepts a full pasted Showdown set, parses the `EVs:` line, converts it to Champions values, and returns the full set text with that line rewritten in two formats.
 
 ```json
 {
@@ -154,7 +166,8 @@ Response fields:
 - `found`: whether an `EVs:` line was detected
 - `evs`: the original parsed Showdown EVs
 - `result`: the converted Champions stat values
-- `championsText`: the full rewritten Showdown set
+- `championsText`: the full rewritten Showdown set using `STs: ...`
+- `legacyText`: the full rewritten Showdown set using approximate old-style `EVs: ...`
 
 ## Project structure
 
@@ -176,7 +189,22 @@ test/
 
 ## Conversion rule
 
-Each stat keeps the same legacy EV input, but the final Champions total is derived from the whole EV pool and then distributed back across stats deterministically. That keeps the stat outputs and the total consistent, including at the `516 EV` ceiling.
+The app stores Champions points directly and treats them as the canonical format.
+
+When importing legacy EVs:
+
+- each stat converts independently with `floor((EV + 4) / 8)`
+- `0 EV -> 0`
+- `4 EV -> 1`
+- `12 EV -> 2`
+- `252 EV -> 32`
+
+This means imported spreads can land below `66` total points, and the app preserves that leftover budget instead of auto-filling it.
+
+When exporting:
+
+- `Champions ST` exports the direct point values as `STs: ...`
+- `Legacy EV` exports the minimum old EV breakpoints that match the same visible stat gains via `4 + (SP - 1) * 8`
 
 ## Notes
 

@@ -1115,6 +1115,107 @@ export function renderHomePage({
         -webkit-appearance: none;
       }
 
+      .modal-textarea {
+        min-height: 10.5rem;
+        resize: vertical;
+        font: 600 0.82rem/1.45 "SFMono-Regular", "Menlo", "Consolas", monospace;
+      }
+
+      .modal-toggle-group {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.55rem;
+      }
+
+      .modal-toggle {
+        min-height: 2.65rem;
+        padding: 0.62rem 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        box-shadow: none;
+      }
+
+      .modal-toggle[data-active="true"] {
+        color: #062019;
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--accent), #9af4db);
+      }
+
+      .modal-toggle:hover {
+        box-shadow: none;
+      }
+
+      .modal-note {
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .modal-help {
+        position: relative;
+        flex: 0 0 auto;
+      }
+
+      .modal-toggle-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .modal-help-trigger {
+        min-height: 2rem;
+        width: 2rem;
+        min-width: 2rem;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 0.92rem;
+        font-weight: 800;
+        line-height: 1;
+        box-shadow: none;
+      }
+
+      .modal-help-trigger:hover,
+      .modal-help-trigger:focus-visible {
+        color: var(--text);
+        border-color: var(--line-strong);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+      }
+
+      .modal-help-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 0.55rem);
+        width: min(18rem, calc(100vw - 2rem));
+        padding: 0.75rem 0.8rem;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: rgba(10, 22, 34, 0.98);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+        opacity: 0;
+        transform: translateY(-4px) scale(0.985);
+        pointer-events: none;
+        transition:
+          opacity var(--motion-medium) var(--ease-out-soft),
+          transform var(--motion-medium) var(--ease-spring-soft);
+      }
+
+      .modal-help:hover .modal-help-panel,
+      .modal-help:focus-within .modal-help-panel {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+
       .reset-modal-actions {
         display: grid;
         gap: 0.6rem;
@@ -1871,10 +1972,63 @@ export function renderHomePage({
 
     <dialog class="reset-modal" id="export-modal" aria-labelledby="export-modal-title">
       <div class="reset-modal-content">
-        <h3 id="export-modal-title">Export to Champions is still in progress</h3>
-        <p>This feature is a work in progress and will be updated after April 8, 2026.</p>
+        <h3 id="export-modal-title">Export spread</h3>
+        <p>Choose whether to export raw Champions STs or the nearest old-style EV breakpoints.</p>
+        <div class="modal-toggle-row">
+          <div class="modal-toggle-group" role="radiogroup" aria-label="Export format">
+            <button
+              class="modal-toggle"
+              id="export-mode-champions"
+              data-export-mode="champions"
+              data-active="true"
+              role="radio"
+              aria-checked="true"
+              autofocus
+              type="button"
+            >
+              Champions ST
+            </button>
+            <button
+              class="modal-toggle"
+              id="export-mode-legacy"
+              data-export-mode="legacy"
+              data-active="false"
+              role="radio"
+              aria-checked="false"
+              type="button"
+            >
+              Legacy EV
+            </button>
+          </div>
+          <div class="modal-help">
+            <button
+              class="modal-help-trigger"
+              type="button"
+              aria-label="Export format help"
+              title="Export format help"
+            >
+              ?
+            </button>
+            <div class="modal-help-panel" role="tooltip">
+              <p class="modal-note" id="export-note">
+                Champions ST export uses direct stat points that map 1:1 to visible stat gains.
+                Legacy EV export uses the minimum old EV breakpoints that match the current visible stat gains.
+              </p>
+            </div>
+          </div>
+        </div>
+        <label class="modal-field" for="export-output">
+          <span class="modal-label">Export text</span>
+          <textarea
+            class="modal-input modal-textarea"
+            id="export-output"
+            readonly
+            spellcheck="false"
+          ></textarea>
+        </label>
         <div class="reset-modal-actions">
-          <button class="primary-btn" id="export-close-btn" type="button">Got it</button>
+          <button class="ghost-btn" id="export-copy-btn" type="button">Copy export</button>
+          <button class="primary-btn" id="export-close-btn" type="button">Close</button>
         </div>
       </div>
     </dialog>
@@ -1948,7 +2102,11 @@ export function renderHomePage({
       const evModalCancelButton = document.querySelector("#ev-modal-cancel-btn");
       const evModalConfirmButton = document.querySelector("#ev-modal-confirm-btn");
       const exportModal = document.querySelector("#export-modal");
+      const exportCopyButton = document.querySelector("#export-copy-btn");
       const exportCloseButton = document.querySelector("#export-close-btn");
+      const exportOutput = document.querySelector("#export-output");
+      const exportNote = document.querySelector("#export-note");
+      const exportModeButtons = Array.from(document.querySelectorAll("[data-export-mode]"));
       const resetModal = document.querySelector("#reset-modal");
       const resetCancelButton = document.querySelector("#reset-cancel-btn");
       const resetConfirmButton = document.querySelector("#reset-confirm-btn");
@@ -1958,6 +2116,7 @@ export function renderHomePage({
       const evEditors = Array.from(document.querySelectorAll("[data-ev-editor]"));
       const modalCloseTimers = new WeakMap();
       const compactActionUi = window.matchMedia("(max-width: 820px)");
+      let exportMode = "champions";
       let activeEvEditor = null;
 
       const showdownToInputKey = {
@@ -1967,6 +2126,15 @@ export function renderHomePage({
         SpA: "specialAttack",
         SpD: "specialDefense",
         Spe: "speed",
+      };
+
+      const inputToShowdownStat = {
+        hp: "HP",
+        attack: "Atk",
+        defense: "Def",
+        specialAttack: "SpA",
+        specialDefense: "SpD",
+        speed: "Spe",
       };
 
       function readPoints(key) {
@@ -1995,11 +2163,7 @@ export function renderHomePage({
 
       function pointsFromLegacyEv(value) {
         const ev = clampEvValue(value);
-        if (ev <= ${MIN_EV}) {
-          return 0;
-        }
-
-        return Math.min(maxStatPoints, Math.floor((ev - 4) / 8) + 1);
+        return Math.min(maxStatPoints, Math.floor((ev + 4) / 8));
       }
 
       function legacyEvFromPoints(value) {
@@ -2065,6 +2229,35 @@ export function renderHomePage({
         return Object.fromEntries(
           statKeys.map((key) => [key, pointsFromLegacyEv(values[key])]),
         );
+      }
+
+      function buildTrainingLine(prefix, values, valueForKey) {
+        const parts = statKeys
+          .filter((key) => values[key] > 0)
+          .map((key) => String(valueForKey(key)) + " " + inputToShowdownStat[key]);
+
+        return prefix + ": " + (parts.length > 0 ? parts.join(" / ") : "0 HP");
+      }
+
+      function buildChampionsExportLine(points) {
+        return buildTrainingLine("STs", points, (key) => clampPointsValue(points[key]));
+      }
+
+      function buildLegacyExportLine(points) {
+        return buildTrainingLine("EVs", points, (key) => legacyEvFromPoints(points[key]));
+      }
+
+      function rewriteOrAppendTrainingLine(text, line) {
+        const trimmed = text.trim();
+        if (!trimmed) {
+          return line;
+        }
+
+        if (/^EVs:\s*.+$/im.test(trimmed)) {
+          return trimmed.replace(/^EVs:\s*.+$/im, line);
+        }
+
+        return trimmed + "\\n" + line;
       }
 
       function applyPoints(values) {
@@ -2177,66 +2370,97 @@ export function renderHomePage({
         closeEvModal();
       }
 
-      /*
-        Reserved for the future Export to Champions flow.
-
-        function setShareLabel(label) {
-          shareLink.textContent = label;
-          if (label !== "Share summary") {
-            window.setTimeout(() => {
-              shareLink.textContent = "Share summary";
-            }, 1600);
-          }
+      function setExportCopyLabel(label) {
+        if (!(exportCopyButton instanceof HTMLButtonElement)) {
+          return;
         }
 
-        async function copyText(text) {
-          if (navigator.clipboard?.writeText) {
-            try {
-              await navigator.clipboard.writeText(text);
-              return true;
-            } catch {
-              // Fall through to legacy copy path.
-            }
-          }
+        exportCopyButton.textContent = label;
+        if (label !== "Copy export") {
+          window.setTimeout(() => {
+            exportCopyButton.textContent = "Copy export";
+          }, 1600);
+        }
+      }
 
-          const textarea = document.createElement("textarea");
-          textarea.value = text;
-          textarea.setAttribute("readonly", "");
-          textarea.style.position = "fixed";
-          textarea.style.top = "0";
-          textarea.style.left = "0";
-          textarea.style.opacity = "0";
-          textarea.style.pointerEvents = "none";
-          textarea.style.fontSize = "16px";
-          document.body.appendChild(textarea);
-
-          const selection = document.getSelection();
-          const originalRange = selection && selection.rangeCount > 0
-            ? selection.getRangeAt(0)
-            : null;
-
-          textarea.focus();
-          textarea.select();
-          textarea.setSelectionRange(0, textarea.value.length);
-
-          let copied = false;
-
+      async function copyText(text) {
+        if (navigator.clipboard?.writeText) {
           try {
-            copied = document.execCommand("copy");
+            await navigator.clipboard.writeText(text);
+            return true;
           } catch {
-            copied = false;
+            // Fall through to legacy copy path.
           }
-
-          document.body.removeChild(textarea);
-
-          if (originalRange && selection) {
-            selection.removeAllRanges();
-            selection.addRange(originalRange);
-          }
-
-          return copied;
         }
-      */
+
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.top = "0";
+        textarea.style.left = "0";
+        textarea.style.opacity = "0";
+        textarea.style.pointerEvents = "none";
+        textarea.style.fontSize = "16px";
+        document.body.appendChild(textarea);
+
+        const selection = document.getSelection();
+        const originalRange = selection && selection.rangeCount > 0
+          ? selection.getRangeAt(0)
+          : null;
+
+        textarea.focus();
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+
+        let copied = false;
+
+        try {
+          copied = document.execCommand("copy");
+        } catch {
+          copied = false;
+        }
+
+        document.body.removeChild(textarea);
+
+        if (originalRange && selection) {
+          selection.removeAllRanges();
+          selection.addRange(originalRange);
+        }
+
+        return copied;
+      }
+
+      function setExportMode(nextMode) {
+        exportMode = nextMode === "legacy" ? "legacy" : "champions";
+
+        for (const button of exportModeButtons) {
+          if (!(button instanceof HTMLButtonElement)) {
+            continue;
+          }
+
+          const isActive = button.dataset.exportMode === exportMode;
+          button.dataset.active = isActive ? "true" : "false";
+          button.setAttribute("aria-checked", isActive ? "true" : "false");
+        }
+      }
+
+      function buildExportText() {
+        const points = readAllPoints();
+        const line = exportMode === "legacy"
+          ? buildLegacyExportLine(points)
+          : buildChampionsExportLine(points);
+
+        return rewriteOrAppendTrainingLine(showdownSetInput.value, line);
+      }
+
+      function refreshExportModal() {
+        if (!(exportOutput instanceof HTMLTextAreaElement)) {
+          return;
+        }
+
+        exportOutput.value = buildExportText();
+      }
 
       function compute() {
         const points = readAllPoints();
@@ -2266,6 +2490,10 @@ export function renderHomePage({
         progressBar.style.filter = overCap ? "saturate(0.95) hue-rotate(-38deg)" : "none";
         evTotal.textContent = String(totalInputEvs) + " / " + ${MAX_TOTAL_EVS} + " EVs";
         evHint.textContent = String(${MAX_TOTAL_EVS} - totalInputEvs) + " EVs left";
+
+        if (exportModal.hasAttribute("open")) {
+          refreshExportModal();
+        }
 
         /*
           Reserved for the future Export to Champions flow.
@@ -2529,8 +2757,35 @@ export function renderHomePage({
         });
       }
       exportButton.addEventListener("click", () => {
+        refreshExportModal();
         openModal(exportModal);
       });
+      for (const button of exportModeButtons) {
+        if (!(button instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        button.addEventListener("click", () => {
+          setExportMode(button.dataset.exportMode);
+          refreshExportModal();
+        });
+      }
+      if (exportCopyButton instanceof HTMLButtonElement) {
+        exportCopyButton.addEventListener("click", async () => {
+          if (!(exportOutput instanceof HTMLTextAreaElement)) {
+            return;
+          }
+
+          const copied = await copyText(exportOutput.value);
+          if (copied) {
+            setExportCopyLabel("Copied export");
+            return;
+          }
+
+          window.prompt("Copy this export:", exportOutput.value);
+          setExportCopyLabel("Copy manually");
+        });
+      }
       if (donateChip instanceof HTMLButtonElement) {
         donateChip.addEventListener("click", () => {
           openModal(donationModal);
@@ -2664,6 +2919,7 @@ export function renderHomePage({
       });
       showdownSetInput.addEventListener("input", updateFromShowdownText);
 
+      setExportMode(exportMode);
       compute();
     </script>
   </body>

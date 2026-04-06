@@ -1,4 +1,3 @@
-export const EV_TO_CHAMPION_FACTOR = 0.12698412698412698;
 export const MAX_TOTAL_CHAMPIONS = 66;
 export const MAX_TOTAL_EVS = 516;
 export const MIN_EV = 0;
@@ -92,14 +91,10 @@ export function clampChampionsInputToBudget(
 
 export function championsPointsFromEv(value: number): number {
   const ev = clampEvValue(value);
-  if (ev <= MIN_EV) {
-    return 0;
-  }
-
-  return Math.min(MAX_STAT_CHAMPIONS, Math.floor((ev - 4) / 8) + 1);
+  return Math.min(MAX_STAT_CHAMPIONS, Math.floor((ev + 4) / 8));
 }
 
-export function canonicalEvFromChampions(value: number): number {
+export function approximateEvFromChampions(value: number): number {
   const points = clampChampionsValue(value);
   if (points <= 0) {
     return MIN_EV;
@@ -107,6 +102,8 @@ export function canonicalEvFromChampions(value: number): number {
 
   return Math.min(MAX_EV, 4 + (points - 1) * 8);
 }
+
+export const canonicalEvFromChampions = approximateEvFromChampions;
 
 function clampEvValue(value: number): number {
   if (!Number.isFinite(value)) {

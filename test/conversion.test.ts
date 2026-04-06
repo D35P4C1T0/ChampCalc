@@ -2,23 +2,53 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  approximateEvFromChampions,
   canonicalEvFromChampions,
   championsPointsFromEv,
   clampChampionsInputToBudget,
   convertEvToChampions,
 } from "../src/domain/ev-master.js";
+import {
+  buildApproximateLegacyEvLine,
+  buildChampionsStLine,
+} from "../src/domain/showdown-parser.js";
 
 test("canonical EV thresholds map cleanly to Champions points", () => {
   assert.equal(championsPointsFromEv(0), 0);
+  assert.equal(championsPointsFromEv(3), 0);
   assert.equal(championsPointsFromEv(4), 1);
   assert.equal(championsPointsFromEv(11), 1);
   assert.equal(championsPointsFromEv(12), 2);
   assert.equal(championsPointsFromEv(252), 32);
 
+  assert.equal(approximateEvFromChampions(0), 0);
+  assert.equal(approximateEvFromChampions(1), 4);
+  assert.equal(approximateEvFromChampions(2), 12);
+  assert.equal(approximateEvFromChampions(32), 252);
   assert.equal(canonicalEvFromChampions(0), 0);
   assert.equal(canonicalEvFromChampions(1), 4);
   assert.equal(canonicalEvFromChampions(2), 12);
   assert.equal(canonicalEvFromChampions(32), 252);
+});
+
+test("export lines can emit Champions STs or approximate legacy EVs", () => {
+  const points = {
+    hp: 0,
+    attack: 32,
+    defense: 0,
+    specialAttack: 0,
+    specialDefense: 1,
+    speed: 32,
+  };
+
+  assert.equal(
+    buildChampionsStLine(points),
+    "STs: 32 Atk / 1 SpD / 32 Spe",
+  );
+  assert.equal(
+    buildApproximateLegacyEvLine(points),
+    "EVs: 252 Atk / 4 SpD / 252 Spe",
+  );
 });
 
 test("full EV spreads can waste a point if they are not in canonical buckets", () => {

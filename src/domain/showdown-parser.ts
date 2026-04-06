@@ -1,4 +1,9 @@
-import { EV_STAT_KEYS, type EvInput } from "./ev-master.js";
+import {
+  EV_STAT_KEYS,
+  approximateEvFromChampions,
+  type ConversionResult,
+  type EvInput,
+} from "./ev-master.js";
 
 const EMPTY_EVS: EvInput = {
   hp: 0,
@@ -71,10 +76,38 @@ export function buildShowdownEvsLine(evs: EvInput): string {
   return `EVs: ${parts.length > 0 ? parts.join(" / ") : "0 HP"}`;
 }
 
+export function buildChampionsStLine(
+  points: Pick<ConversionResult, (typeof EV_STAT_KEYS)[number]>,
+): string {
+  const parts = EV_STAT_KEYS
+    .filter((key) => points[key] > 0)
+    .map((key) => `${points[key]} ${INPUT_TO_SHOWDOWN_STAT[key]}`);
+
+  return `STs: ${parts.length > 0 ? parts.join(" / ") : "0 HP"}`;
+}
+
+export function buildApproximateLegacyEvLine(
+  points: Pick<ConversionResult, (typeof EV_STAT_KEYS)[number]>,
+): string {
+  const parts = EV_STAT_KEYS
+    .filter((key) => points[key] > 0)
+    .map((key) => `${approximateEvFromChampions(points[key])} ${INPUT_TO_SHOWDOWN_STAT[key]}`);
+
+  return `EVs: ${parts.length > 0 ? parts.join(" / ") : "0 HP"}`;
+}
+
 export function rewriteShowdownEvsLine(setText: string, evs: EvInput): string | null {
   if (!EVS_LINE_PATTERN.test(setText)) {
     return null;
   }
 
   return setText.replace(EVS_LINE_PATTERN, buildShowdownEvsLine(evs));
+}
+
+export function rewriteShowdownTrainingLine(setText: string, line: string): string | null {
+  if (!EVS_LINE_PATTERN.test(setText)) {
+    return null;
+  }
+
+  return setText.replace(EVS_LINE_PATTERN, line);
 }

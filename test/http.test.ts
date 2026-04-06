@@ -57,7 +57,7 @@ test("POST /api/convert rejects out-of-range EVs with a public-safe error shape"
   });
 });
 
-test("POST /api/parse-showdown rewrites the full set with Champions EVs", async () => {
+test("POST /api/parse-showdown rewrites the full set with Champions STs and legacy EVs", async () => {
   const app = buildApp();
   const response = await app.inject({
     headers: {
@@ -78,6 +78,7 @@ test("POST /api/parse-showdown rewrites the full set with Champions EVs", async 
   await app.close();
   const body = JSON.parse(response.body) as {
     championsText: string | null;
+    legacyText: string | null;
     found: boolean;
     result: { attack: number; specialDefense: number; speed: number; total: number } | null;
   };
@@ -93,7 +94,17 @@ test("POST /api/parse-showdown rewrites the full set with Champions EVs", async 
     [
       "Pikachu @ Light Ball",
       "Ability: Static",
-      "EVs: 32 Atk / 1 SpD / 32 Spe",
+      "STs: 32 Atk / 1 SpD / 32 Spe",
+      "Jolly Nature",
+      "- Volt Tackle",
+    ].join("\n"),
+  );
+  assert.equal(
+    body.legacyText,
+    [
+      "Pikachu @ Light Ball",
+      "Ability: Static",
+      "EVs: 252 Atk / 4 SpD / 252 Spe",
       "Jolly Nature",
       "- Volt Tackle",
     ].join("\n"),
@@ -117,5 +128,5 @@ test("GET /documentation/json exposes the generated OpenAPI spec", async () => {
   assert.equal(body.openapi, "3.0.3");
   assert.equal(body.info.title, "ChampCalc API");
   assert.equal(body.paths["/api/convert"]?.get?.summary, "Convert legacy EVs to canonical Champions points");
-  assert.equal(body.paths["/api/parse-showdown"]?.post?.summary, "Rewrite a Showdown set into Champions EVs");
+  assert.equal(body.paths["/api/parse-showdown"]?.post?.summary, "Rewrite a Showdown set into Champions STs or legacy EV equivalents");
 });
