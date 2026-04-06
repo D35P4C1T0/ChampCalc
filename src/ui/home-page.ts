@@ -266,6 +266,7 @@ export function renderHomePage({
       .shell::after {
         content: "";
         position: absolute;
+        pointer-events: none;
         border-radius: 999px;
         filter: blur(22px);
       }
@@ -484,14 +485,14 @@ export function renderHomePage({
 
       .summary-value strong {
         font-family: var(--font-display);
-        font-size: clamp(2.2rem, 12vw, 4.6rem);
+        font-size: clamp(1.9rem, 10.5vw, 3.8rem);
         line-height: 0.95;
         letter-spacing: -0.08em;
       }
 
       .summary-value span {
         color: var(--muted);
-        font-size: 1rem;
+        font-size: 0.92rem;
       }
 
       .progress {
@@ -1142,15 +1143,6 @@ export function renderHomePage({
           box-shadow: 0 18px 42px rgba(0, 0, 0, 0.14);
         }
 
-        .action-menu::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 100%;
-          height: 0.6rem;
-        }
-
         .action-panel {
           display: grid;
           position: absolute;
@@ -1172,26 +1164,20 @@ export function renderHomePage({
           transform-origin: top right;
         }
 
-        .action-menu:hover .action-panel,
-        .action-menu[data-open="true"] .action-panel,
-        .action-menu:focus-within .action-panel {
+        .action-menu[data-open="true"] .action-panel {
           opacity: 1;
           transform: translateY(0) scale(1);
           pointer-events: auto;
         }
 
-        .action-menu:hover .action-trigger,
-        .action-menu[data-open="true"] .action-trigger,
-        .action-menu:focus-within .action-trigger {
+        .action-menu[data-open="true"] .action-trigger {
           transform: translateY(-1px);
           border-color: var(--line-strong);
           background: rgba(255, 255, 255, 0.06);
           box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
         }
 
-        .action-menu:hover .action-caret,
-        .action-menu[data-open="true"] .action-caret,
-        .action-menu:focus-within .action-caret {
+        .action-menu[data-open="true"] .action-caret {
           transform: rotate(180deg);
         }
       }
@@ -1325,11 +1311,11 @@ export function renderHomePage({
         }
 
         .summary-value strong {
-          font-size: clamp(1.85rem, 12vw, 2.45rem);
+          font-size: clamp(1.6rem, 10vw, 2.1rem);
         }
 
         .summary-value span {
-          font-size: 0.86rem;
+          font-size: 0.8rem;
         }
 
         .progress {
@@ -1559,10 +1545,56 @@ export function renderHomePage({
 
         .summary-card {
           min-height: 100%;
+          padding: 1rem 1.05rem;
+        }
+
+        .summary-label {
+          margin-bottom: 0.65rem;
+        }
+
+        .summary-value strong {
+          font-size: clamp(2rem, 5.2vw, 3rem);
+        }
+
+        .summary-value span {
+          font-size: 0.9rem;
+        }
+
+        .summary-meta,
+        .budget-bar {
+          margin-top: 0.6rem;
+        }
+
+        .calculator {
+          padding: 1rem 1.05rem 1.05rem;
+        }
+
+        .section-head {
+          margin-bottom: 0.85rem;
         }
 
         .stat-grid {
           grid-template-columns: 1fr 1fr;
+          gap: 0.9rem;
+          margin-top: 0.9rem;
+        }
+
+        .showdown-panel {
+          gap: 0.72rem;
+          padding: 0.9rem 0.95rem;
+        }
+
+        .showdown-body {
+          gap: 0.72rem;
+        }
+
+        .stat-card {
+          gap: 0.72rem;
+          padding: 0.9rem 0.95rem;
+        }
+
+        .stat-meta {
+          gap: 1rem;
         }
 
         .toolbar {
@@ -1680,8 +1712,7 @@ export function renderHomePage({
           <div class="hero-grid">
             <section class="summary-card reveal" style="--delay:180ms" aria-labelledby="summary-title">
               <div class="summary-label">
-                <span id="summary-title">Total champions</span>
-                <span id="summary-status">Within cap</span>
+                <span id="summary-title">Total stat points</span>
               </div>
               <div class="summary-value">
                 <strong id="total-value">0</strong>
@@ -1691,7 +1722,6 @@ export function renderHomePage({
                 <span id="progress-bar"></span>
               </div>
               <div class="summary-meta">
-                <span>Live update</span>
                 <span id="summary-hint">0 points remaining</span>
               </div>
               <div class="budget-bar">
@@ -1896,7 +1926,6 @@ export function renderHomePage({
       const statKeys = ${JSON.stringify(EV_STAT_KEYS)};
       const form = document.querySelector("#calculator-form");
       const totalValue = document.querySelector("#total-value");
-      const summaryStatus = document.querySelector("#summary-status");
       const summaryHint = document.querySelector("#summary-hint");
       const progressBar = document.querySelector("#progress-bar");
       const evTotal = document.querySelector("#ev-total");
@@ -2229,8 +2258,6 @@ export function renderHomePage({
         const overCap = total > maxTotal;
 
         totalValue.textContent = String(total);
-        summaryStatus.textContent = overCap ? "Over cap" : "Within cap";
-        summaryStatus.classList.toggle("warning", overCap);
         summaryHint.textContent = overCap
           ? String(Math.abs(remaining)) + " over the limit"
           : String(remaining) + " points remaining";
