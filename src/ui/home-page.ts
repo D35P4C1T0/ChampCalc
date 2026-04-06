@@ -7,11 +7,12 @@ import {
 } from "../config/external-links.js";
 import {
   EV_STAT_KEYS,
-  EV_TO_CHAMPION_FACTOR,
+  MAX_STAT_CHAMPIONS,
   MAX_EV,
   MAX_TOTAL_CHAMPIONS,
   MAX_TOTAL_EVS,
   MIN_EV,
+  canonicalEvFromChampions,
 } from "../domain/ev-master.js";
 
 const initialStats = [
@@ -29,6 +30,10 @@ const PAGE_DESCRIPTION =
   "Convert Pokemon Showdown EV spreads into the new 66-point Pokemon Champions format with live sliders and built-in set parsing.";
 const SITE_NAME = "ChampCalc";
 const PROJECT_GITHUB_URL = "https://github.com/D35P4C1T0/ChampCalc";
+const POINT_TO_CANONICAL_EV = Array.from(
+  { length: MAX_STAT_CHAMPIONS + 1 },
+  (_, points) => canonicalEvFromChampions(points),
+);
 const PAYPAL_ICON = `
   <svg class="paypal-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path
@@ -69,7 +74,7 @@ export function renderHomePage({
                   type="button"
                   aria-label="Edit ${escapeHtml(stat.label)} EVs"
                 >
-                  <strong id="${stat.key}-value">${MIN_EV}</strong>
+                  <strong id="${stat.key}-value">${POINT_TO_CANONICAL_EV[0]}</strong>
                   <span>EV</span>
                 </button>
                 <input
@@ -81,7 +86,7 @@ export function renderHomePage({
                   min="${MIN_EV}"
                   max="${MAX_EV}"
                   step="${EV_STEP}"
-                  value="${MIN_EV}"
+                  value="${POINT_TO_CANONICAL_EV[0]}"
                   aria-label="${escapeHtml(stat.label)} EVs"
                 />
               </span>
@@ -93,14 +98,14 @@ export function renderHomePage({
               id="${stat.key}"
               name="${stat.key}"
               type="range"
-              min="${MIN_EV}"
-              max="${MAX_EV}"
-              step="${EV_STEP}"
-              value="${MIN_EV}"
+              min="0"
+              max="${MAX_STAT_CHAMPIONS}"
+              step="1"
+              value="0"
             />
             <span class="slider-scale" aria-hidden="true">
-              <span>${MIN_EV}</span>
-              <span>${MAX_EV}</span>
+              <span>0</span>
+              <span>${MAX_STAT_CHAMPIONS}</span>
             </span>
           </div>
         </div>`,
@@ -1881,8 +1886,9 @@ export function renderHomePage({
     </dialog>
 
     <script type="module" nonce="${escapeHtml(scriptNonce)}">
-      const factor = ${JSON.stringify(EV_TO_CHAMPION_FACTOR)};
+      const maxStatPoints = ${JSON.stringify(MAX_STAT_CHAMPIONS)};
       const maxTotal = ${JSON.stringify(MAX_TOTAL_CHAMPIONS)};
+      const pointToEv = ${JSON.stringify(POINT_TO_CANONICAL_EV)};
       // Reserved for the future Export to Champions flow.
       // const shareMessage = ${JSON.stringify(APP_SHARE_MESSAGE)};
       // const downloadUrl = ${JSON.stringify(APP_DOWNLOAD_URL)};
@@ -1934,7 +1940,7 @@ export function renderHomePage({
         Spe: "speed",
       };
 
-      function readValue(key) {
+      function readPoints(key) {
         const input = document.getElementById(key);
         const parsed = Number.parseInt(input.value || "0", 10);
         return Number.isNaN(parsed) ? 0 : parsed;
@@ -1949,63 +1955,45 @@ export function renderHomePage({
         return Math.max(${MIN_EV}, Math.min(${MAX_EV}, parsed));
       }
 
-      function readAllValues() {
+      function clampPointsValue(value) {
+        const parsed = Number.parseInt(String(value ?? ""), 10);
+        if (Number.isNaN(parsed)) {
+          return 0;
+        }
+
+        return Math.max(0, Math.min(maxStatPoints, parsed));
+      }
+
+      function pointsFromLegacyEv(value) {
+        const ev = clampEvValue(value);
+        if (ev <= ${MIN_EV}) {
+          return 0;
+        }
+
+        return Math.min(maxStatPoints, Math.floor((ev - 4) / 8) + 1);
+      }
+
+      function legacyEvFromPoints(value) {
+        return pointToEv[clampPointsValue(value)] ?? ${MIN_EV};
+      }
+
+      function readAllPoints() {
         return {
-          hp: readValue("hp"),
-          attack: readValue("attack"),
-          defense: readValue("defense"),
-          specialAttack: readValue("specialAttack"),
-          specialDefense: readValue("specialDefense"),
-          speed: readValue("speed"),
+          hp: readPoints("hp"),
+          attack: readPoints("attack"),
+          defense: readPoints("defense"),
+          specialAttack: readPoints("specialAttack"),
+          specialDefense: readPoints("specialDefense"),
+          speed: readPoints("speed"),
         };
       }
 
-      function totalEvs(values) {
+      function totalPoints(values) {
         return Object.values(values).reduce((sum, value) => sum + value, 0);
       }
 
-      function toChampions(value) {
-        return Math.round(value * factor);
-      }
-
-      function convertValues(values) {
-        const totalInputEvs = totalEvs(values);
-        const targetTotal = Math.min(maxTotal, toChampions(totalInputEvs));
-        const converted = Object.fromEntries(statKeys.map((key) => [key, 0]));
-        const exactValues = statKeys.map((key, index) => {
-          const exact = values[key] * factor;
-          const base = Math.floor(exact);
-
-          converted[key] = base;
-
-          return {
-            key,
-            index,
-            base,
-            fraction: exact - base,
-            raw: values[key],
-          };
-        });
-
-        const baseTotal = exactValues.reduce((sum, item) => sum + item.base, 0);
-        const remainder = Math.max(0, targetTotal - baseTotal);
-
-        exactValues
-          .sort((left, right) =>
-            right.fraction - left.fraction ||
-            right.raw - left.raw ||
-            left.index - right.index,
-          )
-          .slice(0, remainder)
-          .forEach((item) => {
-            converted[item.key] += 1;
-          });
-
-        return {
-          converted,
-          total: Object.values(converted).reduce((sum, value) => sum + value, 0),
-          totalInputEvs,
-        };
+      function totalLegacyEquivalentEvs(points) {
+        return Object.values(points).reduce((sum, value) => sum + legacyEvFromPoints(value), 0);
       }
 
       function parseShowdownEvs(text) {
@@ -2044,64 +2032,47 @@ export function renderHomePage({
         return parsedSegments > 0 ? values : null;
       }
 
-      function applyValues(values) {
+      function convertLegacyEvsToPoints(values) {
+        return Object.fromEntries(
+          statKeys.map((key) => [key, pointsFromLegacyEv(values[key])]),
+        );
+      }
+
+      function applyPoints(values) {
         for (const [key, value] of Object.entries(values)) {
           const input = document.getElementById(key);
-          input.value = String(value);
+          const points = clampPointsValue(value);
+          input.value = String(points);
 
           const preciseInput = document.querySelector('[data-ev-edit="' + key + '"]');
           if (preciseInput instanceof HTMLInputElement) {
-            preciseInput.value = String(value);
+            preciseInput.value = String(legacyEvFromPoints(points));
           }
         }
       }
 
-      function clampValuesToBudget(values, preferredKey = null) {
+      function applyUserEditedPoints(values, preferredKey) {
         const nextValues = { ...values };
-        let total = totalEvs(nextValues);
-
-        if (total <= ${MAX_TOTAL_EVS}) {
-          return nextValues;
-        }
 
         if (preferredKey && preferredKey in nextValues) {
-          const overflow = total - ${MAX_TOTAL_EVS};
-          nextValues[preferredKey] = Math.max(${MIN_EV}, nextValues[preferredKey] - overflow);
-          total = totalEvs(nextValues);
+          const otherTotal = statKeys.reduce((sum, key) => {
+            if (key === preferredKey) {
+              return sum;
+            }
+
+            return sum + clampPointsValue(nextValues[key]);
+          }, 0);
+          const remaining = Math.max(0, maxTotal - otherTotal);
+          nextValues[preferredKey] = Math.min(clampPointsValue(nextValues[preferredKey]), remaining);
         }
 
-        if (total <= ${MAX_TOTAL_EVS}) {
-          return nextValues;
-        }
-
-        for (const key of statKeys) {
-          if (key === preferredKey) {
-            continue;
-          }
-
-          const overflow = total - ${MAX_TOTAL_EVS};
-          if (overflow <= 0) {
-            break;
-          }
-
-          const deduction = Math.min(nextValues[key], overflow);
-          nextValues[key] -= deduction;
-          total -= deduction;
-        }
-
-        return nextValues;
+        applyPoints(nextValues);
       }
 
-      function enforceBudgetFromInput(changedKey) {
-        const clamped = clampValuesToBudget(readAllValues(), changedKey);
-        applyValues(clamped);
-      }
-
-      function setDirectEvValue(key, value) {
-        const nextValues = readAllValues();
-        nextValues[key] = clampEvValue(value);
-        const clamped = clampValuesToBudget(nextValues, key);
-        applyValues(clamped);
+      function setDirectPointsValue(key, value) {
+        const nextValues = readAllPoints();
+        nextValues[key] = clampPointsValue(value);
+        applyUserEditedPoints(nextValues, key);
         compute();
       }
 
@@ -2116,10 +2087,9 @@ export function renderHomePage({
           return;
         }
 
-        const nextValues = readAllValues();
-        nextValues[key] = clampEvValue(preciseInput.value);
-        const clamped = clampValuesToBudget(nextValues, key);
-        applyValues(clamped);
+        const nextValues = readAllPoints();
+        nextValues[key] = pointsFromLegacyEv(preciseInput.value);
+        applyUserEditedPoints(nextValues, key);
         compute();
         setEvEditorOpen(editor, false);
       }
@@ -2131,7 +2101,7 @@ export function renderHomePage({
           return;
         }
 
-        preciseInput.value = String(readValue(key));
+        preciseInput.value = String(legacyEvFromPoints(readPoints(key)));
         setEvEditorOpen(editor, false);
       }
 
@@ -2148,7 +2118,7 @@ export function renderHomePage({
 
         activeEvEditor = editor;
         evModalTitle.textContent = "Set " + label + " EVs";
-        evModalInput.value = String(readValue(key));
+        evModalInput.value = String(legacyEvFromPoints(readPoints(key)));
         openModal(evModal);
 
         window.requestAnimationFrame(() => {
@@ -2171,10 +2141,9 @@ export function renderHomePage({
           return;
         }
 
-        const nextValues = readAllValues();
-        nextValues[key] = clampEvValue(evModalInput.value);
-        const clamped = clampValuesToBudget(nextValues, key);
-        applyValues(clamped);
+        const nextValues = readAllPoints();
+        nextValues[key] = pointsFromLegacyEv(evModalInput.value);
+        applyUserEditedPoints(nextValues, key);
         compute();
         closeEvModal();
       }
@@ -2241,21 +2210,18 @@ export function renderHomePage({
       */
 
       function compute() {
-        const values = readAllValues();
-        const {
-          converted,
-          total,
-          totalInputEvs,
-        } = convertValues(values);
+        const points = readAllPoints();
+        const total = totalPoints(points);
+        const totalInputEvs = totalLegacyEquivalentEvs(points);
 
         for (const key of statKeys) {
-          const rawValue = values[key];
-          const convertedValue = converted[key];
+          const pointValue = points[key];
+          const legacyEvValue = legacyEvFromPoints(pointValue);
 
           const output = document.getElementById(key + "-result");
           const valueOutput = document.getElementById(key + "-value");
-          valueOutput.textContent = String(rawValue);
-          output.textContent = String(convertedValue);
+          valueOutput.textContent = String(legacyEvValue);
+          output.textContent = String(pointValue);
         }
 
         const remaining = maxTotal - total;
@@ -2278,7 +2244,7 @@ export function renderHomePage({
           Reserved for the future Export to Champions flow.
 
           const shareText = shareMessage + "\\n" +
-            "Spread: " + statKeys.map((key) => key + "=" + readValue(key)).join(", ") + "\\n" +
+            "Spread: " + statKeys.map((key) => key + "=" + readPoints(key)).join(", ") + "\\n" +
             "Total EVs: " + totalInputEvs + " / " + ${MAX_TOTAL_EVS} + "\\n" +
             "Result: " + total + " / " + maxTotal +
             (downloadUrl ? "\\n" + downloadUrl : "");
@@ -2328,13 +2294,13 @@ export function renderHomePage({
           return;
         }
 
-        const clamped = clampValuesToBudget(parsed);
-        applyValues(clamped);
-        const wasCapped = totalEvs(parsed) > ${MAX_TOTAL_EVS};
-        showdownStatus.textContent = wasCapped
-          ? "Parsed EVs and capped to ${MAX_TOTAL_EVS}"
+        const points = convertLegacyEvsToPoints(parsed);
+        applyPoints(points);
+        const total = totalPoints(points);
+        showdownStatus.textContent = total > maxTotal
+          ? "Parsed EVs, but the Champions spread is over cap"
           : "Parsed EVs successfully";
-        showdownStatus.classList.toggle("warning", wasCapped);
+        showdownStatus.classList.toggle("warning", total > maxTotal);
         compute();
       }
 
@@ -2468,7 +2434,10 @@ export function renderHomePage({
       form.addEventListener("input", (event) => {
         const target = event.target;
         if (target instanceof HTMLInputElement && statKeys.includes(target.id)) {
-          enforceBudgetFromInput(target.id);
+          const key = target.id;
+          const nextValues = readAllPoints();
+          nextValues[key] = clampPointsValue(target.value);
+          applyUserEditedPoints(nextValues, key);
         }
         compute();
       });
@@ -2488,7 +2457,7 @@ export function renderHomePage({
           event.stopPropagation();
 
           if (event.ctrlKey || event.metaKey) {
-            setDirectEvValue(key, ${MAX_EV});
+            setDirectPointsValue(key, maxStatPoints);
             return;
           }
 
@@ -2497,7 +2466,7 @@ export function renderHomePage({
             return;
           }
 
-          preciseInput.value = String(readValue(key));
+          preciseInput.value = String(legacyEvFromPoints(readPoints(key)));
           setEvEditorOpen(editor, true);
           window.requestAnimationFrame(() => {
             preciseInput.focus();
@@ -2508,7 +2477,7 @@ export function renderHomePage({
         trigger.addEventListener("dblclick", (event) => {
           event.preventDefault();
           event.stopPropagation();
-          setDirectEvValue(key, ${MIN_EV});
+          setDirectPointsValue(key, 0);
         });
 
         preciseInput.addEventListener("keydown", (event) => {

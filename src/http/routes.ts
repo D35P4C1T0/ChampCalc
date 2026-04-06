@@ -55,8 +55,7 @@ const conversionResultSchema = {
     speed: { type: "integer", description: "Champions Speed points." },
     total: {
       type: "integer",
-      maximum: MAX_TOTAL_CHAMPIONS,
-      description: "Total Champions points across all stats.",
+      description: "Total Champions points across all stats before enforcing the 66-point cap.",
     },
     maxTotal: {
       type: "integer",
@@ -184,9 +183,9 @@ export function registerRoutes(app: FastifyInstance): void {
   app.get("/api/convert", {
     schema: {
       tags: ["conversion"],
-      summary: "Convert legacy EVs to Champions points",
+      summary: "Convert legacy EVs to canonical Champions points",
       description:
-        "Accepts legacy EV values as query parameters and returns the deterministic 66-point Champions conversion.",
+        "Accepts legacy EV values as query parameters and returns the canonical per-stat Champions point buckets plus over-cap metadata.",
       querystring: evInputSchema,
       response: {
         200: convertResponseSchema,
@@ -206,9 +205,9 @@ export function registerRoutes(app: FastifyInstance): void {
   app.post("/api/convert", {
     schema: {
       tags: ["conversion"],
-      summary: "Convert EV payload to Champions points",
+      summary: "Convert EV payload to canonical Champions points",
       description:
-        "Accepts a JSON EV payload and returns the deterministic Champions conversion with total-point metadata.",
+        "Accepts a JSON EV payload and returns the canonical per-stat Champions point buckets with total-point and over-cap metadata.",
       body: evInputSchema,
       response: {
         200: convertResponseSchema,
@@ -230,7 +229,7 @@ export function registerRoutes(app: FastifyInstance): void {
       tags: ["conversion"],
       summary: "Rewrite a Showdown set into Champions EVs",
       description:
-        "Accepts a full pasted Pokemon Showdown set, extracts its EV line, converts it to Champions values, and returns the rewritten set text.",
+        "Accepts a full pasted Pokemon Showdown set, extracts its EV line, converts it into canonical Champions point buckets, and returns the rewritten set text.",
       body: showdownRequestSchema,
       response: {
         200: showdownRewriteResponseSchema,

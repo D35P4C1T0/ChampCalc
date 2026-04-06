@@ -1,9 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { convertEvToChampions } from "../src/domain/ev-master.js";
+import {
+  canonicalEvFromChampions,
+  championsPointsFromEv,
+  clampChampionsInputToBudget,
+  convertEvToChampions,
+} from "../src/domain/ev-master.js";
 
-test("516 EVs can resolve to 66 total champions without going over cap", () => {
+test("canonical EV thresholds map cleanly to Champions points", () => {
+  assert.equal(championsPointsFromEv(0), 0);
+  assert.equal(championsPointsFromEv(4), 1);
+  assert.equal(championsPointsFromEv(11), 1);
+  assert.equal(championsPointsFromEv(12), 2);
+  assert.equal(championsPointsFromEv(252), 32);
+
+  assert.equal(canonicalEvFromChampions(0), 0);
+  assert.equal(canonicalEvFromChampions(1), 4);
+  assert.equal(canonicalEvFromChampions(2), 12);
+  assert.equal(canonicalEvFromChampions(32), 252);
+});
+
+test("full EV spreads can waste a point if they are not in canonical buckets", () => {
   const result = convertEvToChampions({
     hp: 195,
     attack: 22,
@@ -14,37 +32,80 @@ test("516 EVs can resolve to 66 total champions without going over cap", () => {
   });
 
   assert.deepEqual(result, {
-    hp: 25,
+    hp: 24,
     attack: 3,
-    defense: 25,
-    specialAttack: 3,
+    defense: 24,
+    specialAttack: 4,
     specialDefense: 10,
     speed: 0,
-    total: 66,
+    total: 65,
     maxTotal: 66,
     isOverCap: false,
   });
 });
 
-test("sample spread still converts to the expected 65 total", () => {
-  const result = convertEvToChampions({
+test("adding EVs in another stat does not reshuffle an existing point bucket", () => {
+  const base = convertEvToChampions({
     hp: 252,
-    attack: 0,
-    defense: 4,
-    specialAttack: 252,
+    attack: 252,
+    defense: 11,
+    specialAttack: 0,
+    specialDefense: 0,
+    speed: 0,
+  });
+  const changed = convertEvToChampions({
+    hp: 252,
+    attack: 252,
+    defense: 11,
+    specialAttack: 1,
     specialDefense: 0,
     speed: 0,
   });
 
-  assert.deepEqual(result, {
+  assert.equal(base.defense, 1);
+  assert.equal(base.specialAttack, 0);
+  assert.equal(base.total, 65);
+
+  assert.equal(changed.defense, 1);
+  assert.equal(changed.specialAttack, 0);
+  assert.equal(changed.total, 65);
+});
+
+test("independent point buckets can honestly report an over-cap spread", () => {
+  const result = convertEvToChampions({
+    hp: 252,
+    attack: 252,
+    defense: 4,
+    specialAttack: 4,
+    specialDefense: 4,
+    speed: 0,
+  });
+
+  assert.equal(result.hp, 32);
+  assert.equal(result.attack, 32);
+  assert.equal(result.defense, 1);
+  assert.equal(result.specialAttack, 1);
+  assert.equal(result.specialDefense, 1);
+  assert.equal(result.total, 67);
+  assert.equal(result.isOverCap, true);
+});
+
+test("interactive edits clamp only the edited stat to the remaining budget", () => {
+  const clamped = clampChampionsInputToBudget({
     hp: 32,
-    attack: 0,
-    defense: 1,
-    specialAttack: 32,
+    attack: 32,
+    defense: 5,
+    specialAttack: 0,
     specialDefense: 0,
     speed: 0,
-    total: 65,
-    maxTotal: 66,
-    isOverCap: false,
+  }, "defense");
+
+  assert.deepEqual(clamped, {
+    hp: 32,
+    attack: 32,
+    defense: 2,
+    specialAttack: 0,
+    specialDefense: 0,
+    speed: 0,
   });
 });

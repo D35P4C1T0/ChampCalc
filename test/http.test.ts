@@ -24,6 +24,7 @@ test("GET / includes hardened headers and a script nonce", async () => {
     response.body,
     /<meta name="description" content="Convert Pokemon Showdown EV spreads into the new 66-point Pokemon Champions format with live sliders and built-in set parsing\." \/>/,
   );
+  assert.match(response.body, /type="range"[\s\S]*max="32"/);
   assert.match(
     response.body,
     /<link rel="canonical" href="http:\/\/localhost\/" \/>/,
@@ -115,6 +116,6 @@ test("GET /documentation/json exposes the generated OpenAPI spec", async () => {
   assert.equal(response.statusCode, 200);
   assert.equal(body.openapi, "3.0.3");
   assert.equal(body.info.title, "ChampCalc API");
-  assert.equal(body.paths["/api/convert"]?.get?.summary, "Convert legacy EVs to Champions points");
+  assert.equal(body.paths["/api/convert"]?.get?.summary, "Convert legacy EVs to canonical Champions points");
   assert.equal(body.paths["/api/parse-showdown"]?.post?.summary, "Rewrite a Showdown set into Champions EVs");
 });

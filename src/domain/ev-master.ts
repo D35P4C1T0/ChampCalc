@@ -3,6 +3,7 @@ export const MAX_TOTAL_CHAMPIONS = 66;
 export const MAX_TOTAL_EVS = 516;
 export const MIN_EV = 0;
 export const MAX_EV = 252;
+export const MAX_STAT_CHAMPIONS = 32;
 export const EV_STAT_KEYS = [
   "hp",
   "attack",
@@ -34,41 +35,10 @@ export interface ConversionResult {
 }
 
 export function convertEvToChampions(input: EvInput): ConversionResult {
-  const total = Math.min(
-    MAX_TOTAL_CHAMPIONS,
-    toChampions(sumEvInput(input)),
-  );
   const converted = Object.fromEntries(
-    EV_STAT_KEYS.map((key) => [key, 0]),
+    EV_STAT_KEYS.map((key) => [key, championsPointsFromEv(input[key])]),
   ) as Record<(typeof EV_STAT_KEYS)[number], number>;
-  const exactValues = EV_STAT_KEYS.map((key, index) => {
-    const exact = input[key] * EV_TO_CHAMPION_FACTOR;
-    const base = Math.floor(exact);
-
-    converted[key] = base;
-
-    return {
-      key,
-      index,
-      base,
-      fraction: exact - base,
-      raw: input[key],
-    };
-  });
-
-  let remaining = total - exactValues.reduce((sum, item) => sum + item.base, 0);
-
-  exactValues
-    .sort((left, right) =>
-      right.fraction - left.fraction ||
-      right.raw - left.raw ||
-      left.index - right.index,
-    )
-    .slice(0, Math.max(remaining, 0))
-    .forEach((item) => {
-      converted[item.key] += 1;
-      remaining -= 1;
-    });
+  const total = sumChampionsInput(converted);
 
   return {
     ...converted,
@@ -89,6 +59,67 @@ export function sumEvInput(input: EvInput): number {
   );
 }
 
-function toChampions(value: number): number {
-  return Math.round(value * EV_TO_CHAMPION_FACTOR);
+export function sumChampionsInput(
+  input: Pick<ConversionResult, (typeof EV_STAT_KEYS)[number]>,
+): number {
+  return EV_STAT_KEYS.reduce((sum, key) => sum + input[key], 0);
+}
+
+export function clampChampionsInputToBudget(
+  input: Pick<ConversionResult, (typeof EV_STAT_KEYS)[number]>,
+  preferredKey?: (typeof EV_STAT_KEYS)[number],
+): Record<(typeof EV_STAT_KEYS)[number], number> {
+  const next = Object.fromEntries(
+    EV_STAT_KEYS.map((key) => [key, clampChampionsValue(input[key])]),
+  ) as Record<(typeof EV_STAT_KEYS)[number], number>;
+
+  if (!preferredKey) {
+    return next;
+  }
+
+  const otherTotal = EV_STAT_KEYS.reduce((sum, key) => {
+    if (key === preferredKey) {
+      return sum;
+    }
+
+    return sum + next[key];
+  }, 0);
+  const remaining = Math.max(0, MAX_TOTAL_CHAMPIONS - otherTotal);
+  next[preferredKey] = Math.min(next[preferredKey], remaining);
+
+  return next;
+}
+
+export function championsPointsFromEv(value: number): number {
+  const ev = clampEvValue(value);
+  if (ev <= MIN_EV) {
+    return 0;
+  }
+
+  return Math.min(MAX_STAT_CHAMPIONS, Math.floor((ev - 4) / 8) + 1);
+}
+
+export function canonicalEvFromChampions(value: number): number {
+  const points = clampChampionsValue(value);
+  if (points <= 0) {
+    return MIN_EV;
+  }
+
+  return Math.min(MAX_EV, 4 + (points - 1) * 8);
+}
+
+function clampEvValue(value: number): number {
+  if (!Number.isFinite(value)) {
+    return MIN_EV;
+  }
+
+  return Math.max(MIN_EV, Math.min(MAX_EV, Math.trunc(value)));
+}
+
+function clampChampionsValue(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(MAX_STAT_CHAMPIONS, Math.trunc(value)));
 }

@@ -26,7 +26,7 @@ test("Vercel homepage handler returns HTML with a nonce-bearing script tag", asy
   assert.match(response.body, /<script type="application\/ld\+json" nonce="[^"]+">/);
 });
 
-test("Vercel convert GET handler returns the fixed 66-point conversion", async () => {
+test("Vercel convert GET handler returns the canonical point buckets", async () => {
   const app = buildApp();
   const response = await app.inject({
     method: "GET",
@@ -42,9 +42,9 @@ test("Vercel convert GET handler returns the fixed 66-point conversion", async (
   };
 
   assert.equal(response.statusCode, 200);
-  assert.equal(body.result.total, 66);
+  assert.equal(body.result.total, 65);
   assert.equal(body.result.isOverCap, false);
-  assert.equal(body.result.specialAttack, 3);
+  assert.equal(body.result.specialAttack, 4);
 });
 
 test("Vercel convert POST handler rejects invalid EV input", async () => {
