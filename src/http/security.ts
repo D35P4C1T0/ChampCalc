@@ -19,10 +19,10 @@ export function buildHtmlContentSecurityPolicy(scriptNonce: string): string {
   return [
     "default-src 'self'",
     "base-uri 'self'",
-    "connect-src 'self'",
+    "connect-src 'self' https://pokeapi.co",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "img-src 'self' data:",
+    "img-src 'self' data: https://raw.githubusercontent.com",
     "object-src 'none'",
     `script-src 'self' 'nonce-${scriptNonce}'`,
     "style-src 'self' 'unsafe-inline'",

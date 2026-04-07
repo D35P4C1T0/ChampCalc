@@ -6,11 +6,15 @@ import {
   MIN_EV,
   sumEvInput,
 } from "../domain/ev-master.js";
+import { sanitizeUnsignedIntegerInput } from "../domain/input-sanitize.js";
 
-const evValueSchema = z.coerce.number().int()
-  .min(MIN_EV, { message: `EVs cannot be below ${MIN_EV}` })
-  .max(MAX_EV, { message: `EVs cannot exceed ${MAX_EV}` })
-  .default(MIN_EV);
+const evValueSchema = z.preprocess(
+  sanitizeUnsignedIntegerInput,
+  z.number().int()
+    .min(MIN_EV, { message: `EVs cannot be below ${MIN_EV}` })
+    .max(MAX_EV, { message: `EVs cannot exceed ${MAX_EV}` })
+    .default(MIN_EV),
+);
 
 export const convertRequestSchema = z.object({
   hp: evValueSchema,

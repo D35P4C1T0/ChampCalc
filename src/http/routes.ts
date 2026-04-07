@@ -109,7 +109,9 @@ const showdownRequestSchema = {
   properties: {
     text: {
       type: "string",
-      description: "Full Pokemon Showdown set text, including the EVs line to convert.",
+      maxLength: 10000,
+      description:
+        "Full Pokemon Showdown set text, including the EVs line to convert. Input is normalized to LF line endings, stripped of control characters, trimmed, and capped at 10,000 characters.",
     },
   },
 } as const;
@@ -192,7 +194,7 @@ export function registerRoutes(app: FastifyInstance): void {
       tags: ["conversion"],
       summary: "Convert legacy EVs to canonical Champions points",
       description:
-        "Accepts legacy EV values as query parameters, converts each stat independently with the level-50 breakpoint rule floor((EV + 4) / 8), preserves any leftover points below the 66-point cap, and returns the canonical Champions point buckets plus over-cap metadata.",
+        "Accepts legacy EV values as query parameters, sanitizes them as whole unsigned integers, converts each stat independently with the level-50 breakpoint rule floor((EV + 4) / 8), preserves any leftover points below the 66-point cap, and returns the canonical Champions point buckets plus over-cap metadata.",
       querystring: evInputSchema,
       response: {
         200: convertResponseSchema,
@@ -214,7 +216,7 @@ export function registerRoutes(app: FastifyInstance): void {
       tags: ["conversion"],
       summary: "Convert EV payload to canonical Champions points",
       description:
-        "Accepts a JSON EV payload, converts each stat independently with the level-50 breakpoint rule floor((EV + 4) / 8), preserves any leftover points below the 66-point cap, and returns the canonical Champions point buckets with total-point and over-cap metadata.",
+        "Accepts a JSON EV payload, sanitizes each stat as a whole unsigned integer, converts each stat independently with the level-50 breakpoint rule floor((EV + 4) / 8), preserves any leftover points below the 66-point cap, and returns the canonical Champions point buckets with total-point and over-cap metadata.",
       body: evInputSchema,
       response: {
         200: convertResponseSchema,
@@ -236,7 +238,7 @@ export function registerRoutes(app: FastifyInstance): void {
       tags: ["conversion"],
       summary: "Rewrite a Showdown set into Champions STs or legacy EV equivalents",
       description:
-        "Accepts a full pasted Pokemon Showdown set, extracts its EV line, converts it into canonical Champions point buckets with preserved leftover points, and returns the rewritten set text in both raw Champions ST and approximate legacy EV formats.",
+        "Accepts a full pasted Pokemon Showdown set, sanitizes and normalizes the raw text, extracts its EV line, converts it into canonical Champions point buckets with preserved leftover points, and returns the rewritten set text in both raw Champions ST and approximate legacy EV formats.",
       body: showdownRequestSchema,
       response: {
         200: showdownRewriteResponseSchema,

@@ -14,6 +14,7 @@ It converts legacy EV spreads into the new 66-point format, supports live slider
 - live Showdown `EVs:` line parsing
 - full Showdown set rewriting with both Champions `STs:` and approximate legacy `EVs:` exports
 - export modal toggle for raw Champions STs or nearest old-style EV breakpoints
+- sanitized numeric inputs and normalized Showdown text on both client and backend
 - generated Swagger / OpenAPI documentation
 - public-safe validation errors for documented API routes
 - optional PayPal donation button via environment variable
@@ -126,6 +127,7 @@ Conversion note:
 
 - each stat is converted independently with `floor((EV + 4) / 8)`
 - leftover points are preserved rather than auto-spent to reach `66`
+- each stat input is sanitized as a whole unsigned integer before validation
 
 ### `POST /api/convert`
 
@@ -150,6 +152,7 @@ Conversion note:
 
 - each stat is converted independently with `floor((EV + 4) / 8)`
 - leftover points are preserved rather than auto-spent to reach `66`
+- each stat input is sanitized as a whole unsigned integer before validation
 
 ### `POST /api/parse-showdown`
 
@@ -168,6 +171,13 @@ Response fields:
 - `result`: the converted Champions stat values
 - `championsText`: the full rewritten Showdown set using `STs: ...`
 - `legacyText`: the full rewritten Showdown set using approximate old-style `EVs: ...`
+
+Input sanitization:
+
+- line endings are normalized to `\n`
+- control characters are stripped
+- surrounding whitespace is trimmed
+- input is capped at `10,000` characters
 
 ## Project structure
 
@@ -205,6 +215,12 @@ When exporting:
 
 - `Champions ST` exports the direct point values as `STs: ...`
 - `Legacy EV` exports the minimum old EV breakpoints that match the same visible stat gains via `4 + (SP - 1) * 8`
+
+## Input sanitization
+
+- numeric EV inputs are sanitized as whole unsigned integers before validation
+- partially numeric junk like `12abc` is rejected instead of being partially coerced
+- pasted Showdown text is normalized and cleaned on both the frontend and backend
 
 ## Notes
 

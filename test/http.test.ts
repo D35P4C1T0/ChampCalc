@@ -16,6 +16,14 @@ test("GET / includes hardened headers and a script nonce", async () => {
     String(response.headers["content-security-policy"] ?? ""),
     /script-src 'self' 'nonce-/,
   );
+  assert.match(
+    String(response.headers["content-security-policy"] ?? ""),
+    /connect-src 'self' https:\/\/pokeapi\.co/,
+  );
+  assert.match(
+    String(response.headers["content-security-policy"] ?? ""),
+    /img-src 'self' data: https:\/\/raw\.githubusercontent\.com/,
+  );
   assert.equal(response.headers["x-content-type-options"], "nosniff");
   assert.equal(response.headers["referrer-policy"], "no-referrer");
   assert.equal(response.headers["x-frame-options"], "DENY");
@@ -52,6 +60,32 @@ test("POST /api/convert rejects out-of-range EVs with a public-safe error shape"
       {
         field: "hp",
         message: "EVs cannot exceed 252",
+      },
+    ],
+  });
+});
+
+test("POST /api/convert rejects partially numeric junk input", async () => {
+  const app = buildApp();
+  const response = await app.inject({
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    payload: JSON.stringify({
+      hp: "12junk",
+    }),
+    url: "/api/convert",
+  });
+  await app.close();
+
+  assert.equal(response.statusCode, 400);
+  assert.deepEqual(JSON.parse(response.body), {
+    error: "Invalid request payload",
+    details: [
+      {
+        field: "hp",
+        message: "must be integer",
       },
     ],
   });
@@ -107,6 +141,37 @@ test("POST /api/parse-showdown rewrites the full set with Champions STs and lega
       "EVs: 252 Atk / 4 SpD / 252 Spe",
       "Jolly Nature",
       "- Volt Tackle",
+    ].join("\n"),
+  );
+});
+
+test("POST /api/parse-showdown sanitizes control characters and CRLF line endings", async () => {
+  const app = buildApp();
+  const response = await app.inject({
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    payload: JSON.stringify({
+      text: "Pikachu @ Light Ball\r\nAbility:\u0000 Static\r\nEVs: 252 Atk / 4 SpD / 252 Spe\r\nJolly Nature",
+    }),
+    url: "/api/parse-showdown",
+  });
+  await app.close();
+  const body = JSON.parse(response.body) as {
+    championsText: string | null;
+    found: boolean;
+  };
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(body.found, true);
+  assert.equal(
+    body.championsText,
+    [
+      "Pikachu @ Light Ball",
+      "Ability: Static",
+      "STs: 32 Atk / 1 SpD / 32 Spe",
+      "Jolly Nature",
     ].join("\n"),
   );
 });

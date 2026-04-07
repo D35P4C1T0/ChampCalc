@@ -77,6 +77,36 @@ test("Vercel convert POST handler rejects invalid EV input", async () => {
   });
 });
 
+test("Vercel convert POST handler rejects partially numeric junk input", async () => {
+  const app = buildApp();
+  const response = await app.inject({
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    payload: JSON.stringify({
+      hp: "12junk",
+    }),
+    url: "/api/convert",
+  });
+  await app.close();
+  const body = JSON.parse(response.body) as {
+    details: Array<{ field: string; message: string }>;
+    error: string;
+  };
+
+  assert.equal(response.statusCode, 400);
+  assert.deepEqual(body, {
+    error: "Invalid request payload",
+    details: [
+      {
+        field: "hp",
+        message: "must be integer",
+      },
+    ],
+  });
+});
+
 test("Vercel parse-showdown POST returns both Champions ST and legacy EV rewrites", async () => {
   const app = buildApp();
   const response = await app.inject({

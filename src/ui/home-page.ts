@@ -14,6 +14,7 @@ import {
   MIN_EV,
   canonicalEvFromChampions,
 } from "../domain/ev-master.js";
+import { MAX_SHOWDOWN_TEXT_LENGTH } from "../domain/input-sanitize.js";
 
 const initialStats = [
   { key: "hp", label: "HP" },
@@ -552,7 +553,7 @@ export function renderHomePage({
       .section-head {
         display: flex;
         justify-content: space-between;
-        align-items: flex-end;
+        align-items: center;
         gap: 1rem;
         margin-bottom: 0.65rem;
       }
@@ -575,96 +576,74 @@ export function renderHomePage({
         margin-top: 0.7rem;
       }
 
-      .showdown-panel {
-        display: grid;
-        gap: 0.5rem;
-        padding: 0.72rem;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-md);
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
-          rgba(255, 255, 255, 0.015);
-        transition:
-          transform var(--motion-medium) var(--ease-out-soft),
-          border-color var(--motion-medium) var(--ease-out-soft),
-          background var(--motion-medium) var(--ease-out-soft),
-          box-shadow var(--motion-medium) var(--ease-out-soft);
-      }
-
-      .showdown-summary {
-        list-style: none;
-        cursor: pointer;
-      }
-
-      .showdown-summary::-webkit-details-marker {
-        display: none;
-      }
-
-      .showdown-head {
+      .showdown-import-bar {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        gap: 1rem;
+        justify-content: flex-end;
+        gap: 0.7rem;
       }
 
-      .showdown-title-wrap {
+      .showdown-import-btn {
+        min-width: 12.5rem;
+        flex: 0 0 auto;
+      }
+
+      .showdown-import-sprite-shell {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border: 1px solid rgba(166, 191, 214, 0.22);
+        border-radius: 999px;
+        background: rgba(8, 18, 27, 0.78);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        flex: 0 0 auto;
+      }
+
+      .showdown-import-sprite-shell[data-visible="true"] {
+        display: inline-flex;
+      }
+
+      .showdown-import-status {
         display: inline-flex;
         align-items: center;
-        gap: 0.55rem;
-        min-width: 0;
-      }
-
-      .showdown-title {
-        font-size: 0.95rem;
+        justify-content: flex-end;
+        order: -1;
+        gap: 0.6rem;
+        color: var(--muted);
+        font-size: 0.84rem;
         font-weight: 700;
-      }
-
-      .showdown-status {
-        color: var(--muted);
-        font-size: 0.76rem;
         text-align: right;
+        min-width: 0;
+        max-width: min(20rem, 42vw);
       }
 
-      .showdown-caret {
-        color: var(--muted);
-        font-size: 0.78rem;
-        transition: transform var(--motion-medium) var(--ease-out-soft);
+      .showdown-import-status.warning {
+        color: var(--danger);
       }
 
-      .showdown-panel[open] .showdown-caret {
-        transform: rotate(180deg);
+      .showdown-import-sprite {
+        width: 1.7rem;
+        height: 1.7rem;
+        image-rendering: pixelated;
+        object-fit: contain;
+        flex: 0 0 auto;
+        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
       }
 
-      .showdown-body {
-        display: grid;
-        gap: 0.5rem;
+      .showdown-import-label {
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
-      .showdown-panel textarea {
-        width: 100%;
-        min-height: 7.25rem;
+      .showdown-preview {
+        min-height: 10.5rem;
         resize: vertical;
-        padding: 0.72rem 0.8rem;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-sm);
-        outline: none;
-        background: rgba(3, 10, 16, 0.7);
-        color: var(--text);
-        font: 500 0.81rem/1.4 "SFMono-Regular", "Menlo", "Consolas", monospace;
-        transition:
-          border-color var(--motion-fast) ease,
-          box-shadow var(--motion-fast) ease,
-          background var(--motion-fast) ease;
-      }
-
-      .showdown-panel textarea:focus {
-        border-color: rgba(103, 240, 194, 0.4);
-        box-shadow: 0 0 0 4px rgba(103, 240, 194, 0.08);
-        background: rgba(3, 10, 16, 0.9);
-      }
-
-      .showdown-panel textarea::placeholder {
-        color: rgba(143, 167, 188, 0.52);
+        font: 600 0.82rem/1.45 "SFMono-Regular", "Menlo", "Consolas", monospace;
       }
 
       .stat-card {
@@ -1032,6 +1011,48 @@ export function renderHomePage({
         fill: currentColor;
       }
 
+      .help-fab {
+        position: absolute;
+        left: 0.9rem;
+        bottom: 0.9rem;
+        z-index: 5;
+        width: 3rem;
+        min-width: 3rem;
+        min-height: 3rem;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(10, 22, 34, 0.9);
+        color: var(--text);
+        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(14px);
+      }
+
+      .help-fab:hover {
+        border-color: var(--line-strong);
+        background: rgba(18, 33, 48, 0.96);
+      }
+
+      .help-fab span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .tips-list {
+        margin: 0;
+        padding-left: 1.1rem;
+        color: var(--muted);
+        display: grid;
+        gap: 0.5rem;
+        font-size: 0.88rem;
+        line-height: 1.5;
+      }
+
       .reset-modal {
         width: min(calc(100% - 1.5rem), 24rem);
         margin: auto;
@@ -1237,8 +1258,7 @@ export function renderHomePage({
 
       @media (hover: hover) and (pointer: fine) {
         .summary-card:hover,
-        .calculator:hover,
-        .showdown-panel:hover {
+        .calculator:hover {
           transform: translateY(-1px);
           border-color: var(--line-strong);
           box-shadow: 0 18px 42px rgba(0, 0, 0, 0.14);
@@ -1460,42 +1480,9 @@ export function renderHomePage({
           font-size: 0.76rem;
         }
 
-        .showdown-panel,
         .stat-card,
         .action-panel {
           border-radius: 14px;
-        }
-
-        .showdown-panel {
-          gap: 0.42rem;
-          padding: 0.68rem;
-        }
-
-        .showdown-head {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) auto;
-          align-items: center;
-          gap: 0.25rem 0.6rem;
-        }
-
-        .showdown-title-wrap {
-          gap: 0.42rem;
-        }
-
-        .showdown-title {
-          font-size: 0.84rem;
-        }
-
-        .showdown-status {
-          font-size: 0.7rem;
-        }
-
-        .showdown-panel textarea {
-          min-height: 5.4rem;
-          resize: none;
-          padding: 0.62rem 0.72rem;
-          font-size: 0.76rem;
-          line-height: 1.34;
         }
 
         .stat-grid {
@@ -1564,6 +1551,26 @@ export function renderHomePage({
           margin-top: 0.62rem;
         }
 
+        .showdown-import-bar {
+          align-items: stretch;
+          flex-direction: column;
+          justify-content: flex-start;
+          width: 100%;
+          margin-top: 0.2rem;
+        }
+
+        .showdown-import-btn {
+          min-width: 0;
+          width: 100%;
+        }
+
+        .showdown-import-status {
+          order: 0;
+          max-width: none;
+          text-align: left;
+          justify-content: flex-start;
+        }
+
         .button-row {
           gap: 0.5rem;
         }
@@ -1596,6 +1603,14 @@ export function renderHomePage({
 
         .reset-modal-content {
           padding: 0.9rem;
+        }
+
+        .help-fab {
+          left: 0.78rem;
+          bottom: 0.78rem;
+          width: 2.8rem;
+          min-width: 2.8rem;
+          min-height: 2.8rem;
         }
       }
 
@@ -1678,15 +1693,6 @@ export function renderHomePage({
           grid-template-columns: 1fr 1fr;
           gap: 0.9rem;
           margin-top: 0.9rem;
-        }
-
-        .showdown-panel {
-          gap: 0.72rem;
-          padding: 0.9rem 0.95rem;
-        }
-
-        .showdown-body {
-          gap: 0.72rem;
         }
 
         .stat-card {
@@ -1838,31 +1844,34 @@ export function renderHomePage({
             <div class="section-head">
               <div>
                 <h2 id="calculator-title">Stat inputs</h2>
-                <p>Paste a set or adjust the sliders.</p>
+                <p>Import a set or adjust the sliders.</p>
+              </div>
+              <div class="showdown-import-bar">
+                <button class="ghost-btn showdown-import-btn" id="showdown-import-btn" type="button">
+                  <span>Import Showdown set</span>
+                </button>
+                <span class="showdown-import-status" id="showdown-import-status">
+                  <span class="showdown-import-label" id="showdown-import-label">No Showdown set imported</span>
+                  <span
+                    class="showdown-import-sprite-shell"
+                    id="showdown-import-sprite-shell"
+                    data-visible="false"
+                    aria-hidden="true"
+                  >
+                    <img
+                      class="showdown-import-sprite"
+                      id="showdown-import-sprite"
+                      alt=""
+                      hidden
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </span>
+                </span>
               </div>
             </div>
 
             <form id="calculator-form" novalidate>
-              <details class="showdown-panel">
-                <summary class="showdown-summary">
-                  <span class="showdown-head">
-                    <span class="showdown-title-wrap">
-                      <span class="showdown-title">Paste a Showdown set</span>
-                      <span class="showdown-caret" aria-hidden="true">▾</span>
-                    </span>
-                    <span class="showdown-status" id="showdown-status">Waiting for EVs line</span>
-                  </span>
-                </summary>
-                <div class="showdown-body">
-                  <textarea
-                    id="showdown-set"
-                    name="showdownSet"
-                    spellcheck="false"
-                    placeholder="EVs: 244 HP / 4 Def / 252 SpA / 4 SpD / 4 Spe"
-                  ></textarea>
-                </div>
-              </details>
-
               <div class="stat-grid">
                 ${statCards}
               </div>
@@ -1888,6 +1897,16 @@ export function renderHomePage({
             </form>
           </section>
         </main>
+
+        <button
+          class="help-fab"
+          id="tips-btn"
+          type="button"
+          aria-label="Show tips and keybindings"
+          title="Show tips and keybindings"
+        >
+          <span>?</span>
+        </button>
       </div>
     </div>
 
@@ -1898,6 +1917,50 @@ export function renderHomePage({
         <div class="reset-modal-actions">
           <button class="ghost-btn" id="reset-cancel-btn" type="button">Cancel</button>
           <button class="primary-btn" id="reset-confirm-btn" type="button">Reset now</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="reset-modal" id="showdown-import-modal" aria-labelledby="showdown-import-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="showdown-import-modal-title">Paste a Showdown set</h3>
+        <p>Paste the full set text. We will preview it before importing.</p>
+        <label class="modal-field" for="showdown-import-input">
+          <span class="modal-label">Showdown set</span>
+          <textarea
+            class="modal-input modal-textarea showdown-preview"
+            id="showdown-import-input"
+            maxlength="${MAX_SHOWDOWN_TEXT_LENGTH}"
+            spellcheck="false"
+            placeholder="Pikachu @ Light Ball&#10;Ability: Static&#10;EVs: 252 Atk / 4 SpD / 252 Spe&#10;Jolly Nature&#10;- Volt Tackle"
+          ></textarea>
+        </label>
+        <p class="modal-note" id="showdown-import-feedback">
+          Paste a full Showdown set with an EVs line to preview it.
+        </p>
+        <div class="reset-modal-actions">
+          <button class="ghost-btn" id="showdown-import-cancel-btn" type="button">Cancel</button>
+          <button class="primary-btn" id="showdown-import-preview-btn" type="button">Preview import</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="reset-modal" id="showdown-confirm-modal" aria-labelledby="showdown-confirm-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="showdown-confirm-modal-title">Import Showdown set?</h3>
+        <p id="showdown-confirm-copy">This will replace the current stat values with the spread from the pasted set.</p>
+        <label class="modal-field" for="showdown-confirm-preview">
+          <span class="modal-label">Set preview</span>
+          <textarea
+            class="modal-input modal-textarea showdown-preview"
+            id="showdown-confirm-preview"
+            readonly
+            spellcheck="false"
+          ></textarea>
+        </label>
+        <div class="reset-modal-actions">
+          <button class="ghost-btn" id="showdown-confirm-cancel-btn" type="button">Cancel</button>
+          <button class="primary-btn" id="showdown-confirm-import-btn" type="button">Import set</button>
         </div>
       </div>
     </dialog>
@@ -2069,6 +2132,42 @@ export function renderHomePage({
       </div>
     </dialog>
 
+    <dialog class="reset-modal" id="tips-modal" aria-labelledby="tips-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="tips-modal-title">Tips and keybindings</h3>
+        <p>Useful shortcuts to move faster without changing how the calculator works.</p>
+        <ul class="tips-list">
+          <li>Click an EV pill to type a precise value. On mobile, it opens the EV edit modal.</li>
+          <li>Double-click a stat label like HP, Attack, or Defense to reset just that stat to 0.</li>
+          <li>Double-click the big total stat points number to reset the whole spread to 0.</li>
+          <li>Ctrl+click on Windows or Linux, or Cmd+click on macOS, sets that stat to the maximum useful EV value.</li>
+          <li>Use Import Showdown set to bring in a full set. On mobile, pasting a valid full set outside a field opens the import confirmation.</li>
+          <li>Imported Showdown sets keep the whole set text for export, and the badge tries to show the matching Pokemon sprite.</li>
+          <li>Inside the Showdown import modal, Ctrl+Enter or Cmd+Enter previews the pasted set immediately.</li>
+        </ul>
+        <div class="reset-modal-actions">
+          <button class="primary-btn" id="tips-close-btn" type="button">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="reset-modal" id="intro-modal" aria-labelledby="intro-modal-title">
+      <div class="reset-modal-content">
+        <h3 id="intro-modal-title">Welcome to ChampCalc</h3>
+        <p>
+          This tool converts legacy EV spreads into the Pokemon Champions stat-point format and lets you
+          import full Showdown sets for quick editing and export.
+        </p>
+        <p>
+          If you want to discover more shortcuts and features, use the <strong>?</strong> button in the
+          bottom corner of the page.
+        </p>
+        <div class="reset-modal-actions">
+          <button class="primary-btn" id="intro-close-btn" type="button">Let’s go</button>
+        </div>
+      </div>
+    </dialog>
+
     <script type="module" nonce="${escapeHtml(scriptNonce)}">
       const maxStatPoints = ${JSON.stringify(MAX_STAT_CHAMPIONS)};
       const maxTotal = ${JSON.stringify(MAX_TOTAL_CHAMPIONS)};
@@ -2078,6 +2177,9 @@ export function renderHomePage({
       // const downloadUrl = ${JSON.stringify(APP_DOWNLOAD_URL)};
 
       const statKeys = ${JSON.stringify(EV_STAT_KEYS)};
+      const maxShowdownTextLength = ${JSON.stringify(MAX_SHOWDOWN_TEXT_LENGTH)};
+      const introSeenStorageKey = "champcalc:intro-seen:v1";
+      const spriteCachePrefix = "champcalc:pokemon-sprite:v1:";
       const form = document.querySelector("#calculator-form");
       const totalValue = document.querySelector("#total-value");
       const summaryHint = document.querySelector("#summary-hint");
@@ -2110,14 +2212,35 @@ export function renderHomePage({
       const resetModal = document.querySelector("#reset-modal");
       const resetCancelButton = document.querySelector("#reset-cancel-btn");
       const resetConfirmButton = document.querySelector("#reset-confirm-btn");
-      const showdownSetInput = document.querySelector("#showdown-set");
-      const showdownStatus = document.querySelector("#showdown-status");
+      const tipsButton = document.querySelector("#tips-btn");
+      const tipsModal = document.querySelector("#tips-modal");
+      const tipsCloseButton = document.querySelector("#tips-close-btn");
+      const introModal = document.querySelector("#intro-modal");
+      const introCloseButton = document.querySelector("#intro-close-btn");
+      const showdownImportButton = document.querySelector("#showdown-import-btn");
+      const showdownImportLabel = document.querySelector("#showdown-import-label");
+      const showdownImportSpriteShell = document.querySelector("#showdown-import-sprite-shell");
+      const showdownImportSprite = document.querySelector("#showdown-import-sprite");
+      const showdownImportStatus = document.querySelector("#showdown-import-status");
+      const showdownImportModal = document.querySelector("#showdown-import-modal");
+      const showdownImportInput = document.querySelector("#showdown-import-input");
+      const showdownImportFeedback = document.querySelector("#showdown-import-feedback");
+      const showdownImportCancelButton = document.querySelector("#showdown-import-cancel-btn");
+      const showdownImportPreviewButton = document.querySelector("#showdown-import-preview-btn");
+      const showdownConfirmModal = document.querySelector("#showdown-confirm-modal");
+      const showdownConfirmCopy = document.querySelector("#showdown-confirm-copy");
+      const showdownConfirmPreview = document.querySelector("#showdown-confirm-preview");
+      const showdownConfirmCancelButton = document.querySelector("#showdown-confirm-cancel-btn");
+      const showdownConfirmImportButton = document.querySelector("#showdown-confirm-import-btn");
       const actionMenus = Array.from(document.querySelectorAll("[data-action-menu]"));
       const evEditors = Array.from(document.querySelectorAll("[data-ev-editor]"));
       const modalCloseTimers = new WeakMap();
       const compactActionUi = window.matchMedia("(max-width: 820px)");
       let exportMode = "champions";
       let activeEvEditor = null;
+      let importedShowdownText = "";
+      let pendingShowdownText = "";
+      let latestSpriteLookupId = 0;
 
       const showdownToInputKey = {
         HP: "hp",
@@ -2139,12 +2262,51 @@ export function renderHomePage({
 
       function readPoints(key) {
         const input = document.getElementById(key);
-        const parsed = Number.parseInt(input.value || "0", 10);
+        const parsed = sanitizeUnsignedIntegerInput(input.value || "0");
         return Number.isNaN(parsed) ? 0 : parsed;
       }
 
+      function escapeHtmlForHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function sanitizeUnsignedIntegerInput(value) {
+        if (typeof value === "number") {
+          if (!Number.isFinite(value)) {
+            return Number.NaN;
+          }
+
+          return Math.trunc(value);
+        }
+
+        const text = String(value ?? "").trim();
+        if (!text) {
+          return Number.NaN;
+        }
+
+        if (!/^\\d+$/.test(text)) {
+          return Number.NaN;
+        }
+
+        return Number.parseInt(text, 10);
+      }
+
+      function sanitizeShowdownText(value) {
+        return String(value ?? "")
+          .normalize("NFKC")
+          .replace(/\\r\\n?/g, "\\n")
+          .replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/g, "")
+          .trim()
+          .slice(0, maxShowdownTextLength);
+      }
+
       function clampEvValue(value) {
-        const parsed = Number.parseInt(String(value ?? ""), 10);
+        const parsed = sanitizeUnsignedIntegerInput(value);
         if (Number.isNaN(parsed)) {
           return ${MIN_EV};
         }
@@ -2153,7 +2315,7 @@ export function renderHomePage({
       }
 
       function clampPointsValue(value) {
-        const parsed = Number.parseInt(String(value ?? ""), 10);
+        const parsed = sanitizeUnsignedIntegerInput(value);
         if (Number.isNaN(parsed)) {
           return 0;
         }
@@ -2253,11 +2415,396 @@ export function renderHomePage({
           return line;
         }
 
-        if (/^EVs:\s*.+$/im.test(trimmed)) {
-          return trimmed.replace(/^EVs:\s*.+$/im, line);
+        if (/^(?:EVs|STs):\s*.+$/im.test(trimmed)) {
+          return trimmed.replace(/^(?:EVs|STs):\s*.+$/im, line);
         }
 
         return trimmed + "\\n" + line;
+      }
+
+      function getShowdownTitle(text) {
+        const firstLine = text
+          .split(/\\r?\\n/)
+          .map((line) => line.trim())
+          .find(Boolean);
+
+        return firstLine || "Imported Showdown set";
+      }
+
+      function parseShowdownLead(text) {
+        const firstLine = text
+          .split(/\\r?\\n/)
+          .map((line) => line.trim())
+          .find(Boolean);
+
+        if (!firstLine) {
+          return {
+            displayName: "",
+            speciesName: "",
+            title: "Imported Showdown set",
+          };
+        }
+
+        const base = firstLine.split("@")[0]?.trim() ?? "";
+        const nicknameMatch = base.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+        if (nicknameMatch) {
+          const nickname = nicknameMatch[1]?.trim() ?? "";
+          const speciesName = nicknameMatch[2]?.trim() ?? "";
+
+          return {
+            displayName: nickname || speciesName,
+            speciesName,
+            title: firstLine,
+          };
+        }
+
+        return {
+          displayName: base,
+          speciesName: base,
+          title: firstLine,
+        };
+      }
+
+      function setShowdownImportStatus(message, isWarning = false, title = "", spriteUrl = "") {
+        if (!(showdownImportStatus instanceof HTMLElement)) {
+          return;
+        }
+
+        if (showdownImportLabel instanceof HTMLElement) {
+          showdownImportLabel.textContent = message;
+        }
+        if (showdownImportSpriteShell instanceof HTMLElement && showdownImportSprite instanceof HTMLImageElement) {
+          if (spriteUrl) {
+            showdownImportSprite.src = spriteUrl;
+            showdownImportSprite.hidden = false;
+            showdownImportSpriteShell.dataset.visible = "true";
+          } else {
+            showdownImportSprite.removeAttribute("src");
+            showdownImportSprite.hidden = true;
+            showdownImportSpriteShell.dataset.visible = "false";
+          }
+        }
+        showdownImportStatus.classList.toggle("warning", isWarning);
+        showdownImportStatus.title = title;
+      }
+
+      function setShowdownImportFeedback(message, isWarning = false) {
+        if (!(showdownImportFeedback instanceof HTMLElement)) {
+          return;
+        }
+
+        showdownImportFeedback.textContent = message;
+        showdownImportFeedback.classList.toggle("warning", isWarning);
+      }
+
+      function syncShowdownImportInput() {
+        if (!(showdownImportInput instanceof HTMLTextAreaElement)) {
+          return;
+        }
+
+        showdownImportInput.value = sanitizeShowdownText(importedShowdownText);
+      }
+
+      function parseWholeShowdownSet(text) {
+        const trimmed = sanitizeShowdownText(text);
+        if (!trimmed) {
+          return null;
+        }
+
+        const nonEmptyLines = trimmed
+          .split(/\\r?\\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        if (nonEmptyLines.length < 2) {
+          return null;
+        }
+
+        const evs = parseShowdownEvs(trimmed);
+        if (!evs) {
+          return null;
+        }
+
+        const points = convertLegacyEvsToPoints(evs);
+        return {
+          evs,
+          points,
+          text: trimmed,
+          ...parseShowdownLead(trimmed),
+          total: totalPoints(points),
+        };
+      }
+
+      function normalizePokemonApiName(name) {
+        if (!name) {
+          return "";
+        }
+
+        return name
+          .trim()
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\\u0300-\\u036f]/g, "")
+          .replace(/♀/g, "-f")
+          .replace(/♂/g, "-m")
+          .replace(/['’:.]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "");
+      }
+
+      function readCachedSpriteUrl(name) {
+        if (!name || !("localStorage" in window)) {
+          return "";
+        }
+
+        try {
+          const cached = window.localStorage.getItem(spriteCachePrefix + name);
+          return typeof cached === "string" ? cached : "";
+        } catch {
+          return "";
+        }
+      }
+
+      function writeCachedSpriteUrl(name, url) {
+        if (!name || !url || !("localStorage" in window)) {
+          return;
+        }
+
+        try {
+          window.localStorage.setItem(spriteCachePrefix + name, url);
+        } catch {
+          // Ignore quota or privacy-mode failures.
+        }
+      }
+
+      function hasSeenIntroModal() {
+        if (!("localStorage" in window)) {
+          return true;
+        }
+
+        try {
+          return window.localStorage.getItem(introSeenStorageKey) === "true";
+        } catch {
+          return true;
+        }
+      }
+
+      function markIntroModalSeen() {
+        if (!("localStorage" in window)) {
+          return;
+        }
+
+        try {
+          window.localStorage.setItem(introSeenStorageKey, "true");
+        } catch {
+          // Ignore storage failures.
+        }
+      }
+
+      function buildPokemonApiCandidates(name) {
+        const normalized = normalizePokemonApiName(name);
+        if (!normalized) {
+          return [];
+        }
+
+        const candidates = new Set([normalized]);
+        const aliasMap = {
+          "mr-mime": ["mr-mime"],
+          "mr-rime": ["mr-rime"],
+          "mime-jr": ["mime-jr"],
+          "farfetchd": ["farfetchd"],
+          "sirfetchd": ["sirfetchd"],
+          "type-null": ["type-null"],
+          "jangmo-o": ["jangmo-o"],
+          "hakamo-o": ["hakamo-o"],
+          "kommo-o": ["kommo-o"],
+          "ho-oh": ["ho-oh"],
+          "porygon-z": ["porygon-z"],
+          "wo-chien": ["wo-chien"],
+          "chien-pao": ["chien-pao"],
+          "ting-lu": ["ting-lu"],
+          "chi-yu": ["chi-yu"],
+          "great-tusk": ["great-tusk"],
+          "brute-bonnet": ["brute-bonnet"],
+          "scream-tail": ["scream-tail"],
+          "flutter-mane": ["flutter-mane"],
+          "slither-wing": ["slither-wing"],
+          "sandy-shocks": ["sandy-shocks"],
+          "iron-treads": ["iron-treads"],
+          "iron-bundle": ["iron-bundle"],
+          "iron-hands": ["iron-hands"],
+          "iron-jugulis": ["iron-jugulis"],
+          "iron-moth": ["iron-moth"],
+          "iron-thorns": ["iron-thorns"],
+          "iron-valiant": ["iron-valiant"],
+          "walking-wake": ["walking-wake"],
+          "gouging-fire": ["gouging-fire"],
+          "raging-bolt": ["raging-bolt"],
+          "iron-boulder": ["iron-boulder"],
+          "iron-crown": ["iron-crown"],
+          "terapagos-stellar": ["terapagos-stellar"],
+          "calyrex-shadow": ["calyrex-shadow-rider"],
+          "calyrex-ice": ["calyrex-ice-rider"],
+          "urshifu-single-strike": ["urshifu-single-strike"],
+          "urshifu-rapid-strike": ["urshifu-rapid-strike"],
+          "zygarde-10": ["zygarde-10-power-construct", "zygarde-10"],
+          "zygarde-complete": ["zygarde-complete"],
+          "necrozma-dawn-wings": ["necrozma-dawn"],
+          "necrozma-dusk-mane": ["necrozma-dusk"],
+          "landorus-therian": ["landorus-therian"],
+          "tornadus-therian": ["tornadus-therian"],
+          "thundurus-therian": ["thundurus-therian"],
+          "enamorus-therian": ["enamorus-therian"],
+          "basculegion-f": ["basculegion-female", "basculegion"],
+          "basculegion-m": ["basculegion-male", "basculegion"],
+          "indeedee-f": ["indeedee-female", "indeedee"],
+          "indeedee-m": ["indeedee-male", "indeedee"],
+          "ogerpon-cornerstone": ["ogerpon-cornerstone-mask"],
+          "ogerpon-hearthflame": ["ogerpon-hearthflame-mask"],
+          "ogerpon-wellspring": ["ogerpon-wellspring-mask"],
+        };
+
+        for (const alias of aliasMap[normalized] ?? []) {
+          candidates.add(alias);
+        }
+
+        if (normalized.endsWith("-totem")) {
+          candidates.add(normalized.replace(/-totem$/, ""));
+        }
+
+        if (normalized.startsWith("mimikyu-")) {
+          candidates.add("mimikyu-disguised");
+        }
+
+        if (normalized.startsWith("eiscue-")) {
+          candidates.add("eiscue-ice");
+        }
+
+        if (normalized.startsWith("morpeko-")) {
+          candidates.add("morpeko-full-belly");
+        }
+
+        if (normalized.startsWith("basculin-")) {
+          candidates.add(normalized.replace(/-white-striped$/, "-white-striped"));
+        }
+
+        return Array.from(candidates);
+      }
+
+      async function fetchPokemonSpriteUrl(speciesName) {
+        const candidates = buildPokemonApiCandidates(speciesName);
+        if (candidates.length === 0) {
+          return "";
+        }
+
+        for (const candidate of candidates) {
+          const cachedUrl = readCachedSpriteUrl(candidate);
+          if (cachedUrl) {
+            return cachedUrl;
+          }
+        }
+
+        for (const candidate of candidates) {
+          try {
+            const response = await fetch("https://pokeapi.co/api/v2/pokemon/" + encodeURIComponent(candidate));
+            if (!response.ok) {
+              continue;
+            }
+
+            const body = await response.json();
+            const spriteUrl =
+              body?.sprites?.front_default ||
+              body?.sprites?.versions?.["generation-viii"]?.icons?.front_default ||
+              body?.sprites?.other?.showdown?.front_default ||
+              "";
+
+            if (typeof spriteUrl === "string" && spriteUrl) {
+              writeCachedSpriteUrl(candidate, spriteUrl);
+              return spriteUrl;
+            }
+          } catch {
+            return "";
+          }
+        }
+
+        return "";
+      }
+
+      async function refreshShowdownImportSprite(speciesName, fallbackMessage, isWarning, title) {
+        const lookupId = ++latestSpriteLookupId;
+        const spriteUrl = await fetchPokemonSpriteUrl(speciesName);
+        if (lookupId !== latestSpriteLookupId) {
+          return;
+        }
+
+        setShowdownImportStatus(fallbackMessage, isWarning, title, spriteUrl);
+      }
+
+      function previewShowdownImport(text) {
+        const parsed = parseWholeShowdownSet(text);
+        if (!parsed) {
+          return false;
+        }
+
+        pendingShowdownText = parsed.text;
+
+        if (showdownConfirmCopy instanceof HTMLElement) {
+          showdownConfirmCopy.textContent = parsed.total > maxTotal
+            ? "This set parses correctly, but its Champions spread is over the 66-point cap."
+            : "This will replace the current stat values with the spread from the pasted set.";
+        }
+
+        if (showdownConfirmPreview instanceof HTMLTextAreaElement) {
+          showdownConfirmPreview.value = parsed.text;
+        }
+
+        return true;
+      }
+
+      function commitPendingShowdownImport() {
+        const parsed = parseWholeShowdownSet(pendingShowdownText);
+        if (!parsed) {
+          return;
+        }
+
+        importedShowdownText = parsed.text;
+        applyPoints(parsed.points);
+        setShowdownImportStatus(
+          parsed.displayName || parsed.speciesName || parsed.title,
+          parsed.total > maxTotal,
+          parsed.title,
+        );
+        if (parsed.speciesName) {
+          void refreshShowdownImportSprite(
+            parsed.speciesName,
+            parsed.displayName || parsed.speciesName,
+            parsed.total > maxTotal,
+            parsed.title,
+          );
+        }
+        compute();
+      }
+
+      function clearImportedShowdownSet() {
+        importedShowdownText = "";
+        pendingShowdownText = "";
+        latestSpriteLookupId += 1;
+        syncShowdownImportInput();
+
+        if (showdownConfirmPreview instanceof HTMLTextAreaElement) {
+          showdownConfirmPreview.value = "";
+        }
+
+        setShowdownImportStatus("No Showdown set imported");
+        setShowdownImportFeedback("Paste a full Showdown set with an EVs line to preview it.");
+      }
+
+      function isEditableTarget(target) {
+        return target instanceof HTMLElement && (
+          target.isContentEditable ||
+          target.closest("input, textarea, select, [contenteditable='true']")
+        );
       }
 
       function applyPoints(values) {
@@ -2271,6 +2818,11 @@ export function renderHomePage({
             preciseInput.value = String(legacyEvFromPoints(points));
           }
         }
+      }
+
+      function resetAllPoints() {
+        applyPoints(Object.fromEntries(statKeys.map((key) => [key, 0])));
+        compute();
       }
 
       function applyUserEditedPoints(values, preferredKey) {
@@ -2451,7 +3003,7 @@ export function renderHomePage({
           ? buildLegacyExportLine(points)
           : buildChampionsExportLine(points);
 
-        return rewriteOrAppendTrainingLine(showdownSetInput.value, line);
+        return rewriteOrAppendTrainingLine(importedShowdownText, line);
       }
 
       function refreshExportModal() {
@@ -2533,32 +3085,6 @@ export function renderHomePage({
         */
       }
 
-      function updateFromShowdownText() {
-        const text = showdownSetInput.value;
-        const parsed = parseShowdownEvs(text);
-
-        if (!text.trim()) {
-          showdownStatus.textContent = "Waiting for EVs line";
-          showdownStatus.classList.remove("warning");
-          return;
-        }
-
-        if (!parsed) {
-          showdownStatus.textContent = "No EVs line detected yet";
-          showdownStatus.classList.add("warning");
-          return;
-        }
-
-        const points = convertLegacyEvsToPoints(parsed);
-        applyPoints(points);
-        const total = totalPoints(points);
-        showdownStatus.textContent = total > maxTotal
-          ? "Parsed EVs, but the Champions spread is over cap"
-          : "Parsed EVs successfully";
-        showdownStatus.classList.toggle("warning", total > maxTotal);
-        compute();
-      }
-
       function openModal(modal) {
         const existingTimer = modalCloseTimers.get(modal);
         if (existingTimer) {
@@ -2622,6 +3148,10 @@ export function renderHomePage({
 
         if (modal === evModal) {
           activeEvEditor = null;
+        }
+
+        if (modal === showdownConfirmModal) {
+          pendingShowdownText = "";
         }
       }
 
@@ -2702,6 +3232,9 @@ export function renderHomePage({
         const trigger = editor.querySelector("[data-ev-pill]");
         const preciseInput = editor.querySelector("[data-ev-edit]");
         const key = editor.dataset.evEditor;
+        const statLabel = key
+          ? document.querySelector('.stat-name[for="' + key + '"]')
+          : null;
 
         if (!(trigger instanceof HTMLButtonElement) || !(preciseInput instanceof HTMLInputElement) || !key) {
           continue;
@@ -2729,12 +3262,6 @@ export function renderHomePage({
           });
         });
 
-        trigger.addEventListener("dblclick", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          setDirectPointsValue(key, 0);
-        });
-
         preciseInput.addEventListener("keydown", (event) => {
           if (event.key === "Enter") {
             event.preventDefault();
@@ -2755,11 +3282,73 @@ export function renderHomePage({
             commitEvEditor(editor);
           }
         });
+
+        if (statLabel instanceof HTMLLabelElement) {
+          statLabel.addEventListener("dblclick", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDirectPointsValue(key, 0);
+          });
+        }
       }
       exportButton.addEventListener("click", () => {
         refreshExportModal();
         openModal(exportModal);
       });
+      if (showdownImportButton instanceof HTMLButtonElement) {
+        showdownImportButton.addEventListener("click", () => {
+          syncShowdownImportInput();
+          setShowdownImportFeedback("Paste a full Showdown set with an EVs line to preview it.");
+          openModal(showdownImportModal);
+        });
+      }
+      if (showdownImportCancelButton instanceof HTMLButtonElement) {
+        showdownImportCancelButton.addEventListener("click", () => {
+          closeModal(showdownImportModal);
+        });
+      }
+      if (showdownImportPreviewButton instanceof HTMLButtonElement) {
+        showdownImportPreviewButton.addEventListener("click", () => {
+          const text = showdownImportInput instanceof HTMLTextAreaElement
+            ? sanitizeShowdownText(showdownImportInput.value)
+            : "";
+          if (showdownImportInput instanceof HTMLTextAreaElement) {
+            showdownImportInput.value = text;
+          }
+          if (!previewShowdownImport(text)) {
+            setShowdownImportFeedback(
+              "Paste a full Showdown set with at least one EVs line before importing.",
+              true,
+            );
+            return;
+          }
+
+          closeModal(showdownImportModal);
+          window.setTimeout(() => {
+            openModal(showdownConfirmModal);
+          }, 220);
+        });
+      }
+      if (showdownConfirmCancelButton instanceof HTMLButtonElement) {
+        showdownConfirmCancelButton.addEventListener("click", () => {
+          pendingShowdownText = "";
+          closeModal(showdownConfirmModal);
+        });
+      }
+      if (showdownConfirmImportButton instanceof HTMLButtonElement) {
+        showdownConfirmImportButton.addEventListener("click", () => {
+          commitPendingShowdownImport();
+          closeModal(showdownConfirmModal);
+        });
+      }
+      if (showdownImportInput instanceof HTMLTextAreaElement) {
+        showdownImportInput.addEventListener("keydown", (event) => {
+          if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            showdownImportPreviewButton?.click();
+          }
+        });
+      }
       for (const button of exportModeButtons) {
         if (!(button instanceof HTMLButtonElement)) {
           continue;
@@ -2808,6 +3397,22 @@ export function renderHomePage({
       resetButton.addEventListener("click", () => {
         openModal(resetModal);
       });
+      if (tipsButton instanceof HTMLButtonElement) {
+        tipsButton.addEventListener("click", () => {
+          openModal(tipsModal);
+        });
+      }
+      if (tipsCloseButton instanceof HTMLButtonElement) {
+        tipsCloseButton.addEventListener("click", () => {
+          closeModal(tipsModal);
+        });
+      }
+      if (introCloseButton instanceof HTMLButtonElement) {
+        introCloseButton.addEventListener("click", () => {
+          markIntroModalSeen();
+          closeModal(introModal);
+        });
+      }
       donationCloseButton.addEventListener("click", () => {
         closeModal(donationModal);
       });
@@ -2836,9 +3441,28 @@ export function renderHomePage({
       });
       resetConfirmButton.addEventListener("click", () => {
         closeModal(resetModal);
+        clearImportedShowdownSet();
         form.reset();
       });
-      for (const modal of [resetModal, creatorModal, donateInfoModal, exportModal, donationModal, evModal]) {
+      if (totalValue instanceof HTMLElement) {
+        totalValue.addEventListener("dblclick", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          resetAllPoints();
+        });
+      }
+      for (const modal of [
+        resetModal,
+        showdownImportModal,
+        showdownConfirmModal,
+        creatorModal,
+        donateInfoModal,
+        introModal,
+        tipsModal,
+        exportModal,
+        donationModal,
+        evModal,
+      ]) {
         modal.addEventListener("click", (event) => {
           if (event.target === modal) {
             closeModal(modal);
@@ -2869,6 +3493,24 @@ export function renderHomePage({
 
           if (exportModal.hasAttribute("open")) {
             closeModal(exportModal);
+          }
+
+          if (tipsModal.hasAttribute("open")) {
+            closeModal(tipsModal);
+          }
+
+          if (introModal.hasAttribute("open")) {
+            markIntroModalSeen();
+            closeModal(introModal);
+          }
+
+          if (showdownConfirmModal.hasAttribute("open")) {
+            pendingShowdownText = "";
+            closeModal(showdownConfirmModal);
+          }
+
+          if (showdownImportModal.hasAttribute("open")) {
+            closeModal(showdownImportModal);
           }
 
           if (resetModal.hasAttribute("open")) {
@@ -2917,10 +3559,28 @@ export function renderHomePage({
       form.addEventListener("reset", () => {
         window.requestAnimationFrame(compute);
       });
-      showdownSetInput.addEventListener("input", updateFromShowdownText);
+      document.addEventListener("paste", (event) => {
+        if (!compactActionUi.matches || isEditableTarget(event.target)) {
+          return;
+        }
 
+        const text = event.clipboardData?.getData("text") || "";
+        if (!previewShowdownImport(text)) {
+          return;
+        }
+
+        event.preventDefault();
+        closeModal(showdownImportModal);
+        openModal(showdownConfirmModal);
+      });
+
+      clearImportedShowdownSet();
       setExportMode(exportMode);
       compute();
+      if (!hasSeenIntroModal()) {
+        markIntroModalSeen();
+        openModal(introModal);
+      }
     </script>
   </body>
 </html>`;
