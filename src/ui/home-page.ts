@@ -2036,7 +2036,7 @@ export function renderHomePage({
     <dialog class="reset-modal" id="export-modal" aria-labelledby="export-modal-title">
       <div class="reset-modal-content">
         <h3 id="export-modal-title">Export spread</h3>
-        <p>Choose whether to export raw Champions STs or the nearest old-style EV breakpoints.</p>
+        <p>Choose whether to export canonical Champions SPs or an approximate legacy EV rewrite.</p>
         <div class="modal-toggle-row">
           <div class="modal-toggle-group" role="radiogroup" aria-label="Export format">
             <button
@@ -2049,7 +2049,7 @@ export function renderHomePage({
               autofocus
               type="button"
             >
-              Champions ST
+              Champions SP
             </button>
             <button
               class="modal-toggle"
@@ -2074,8 +2074,9 @@ export function renderHomePage({
             </button>
             <div class="modal-help-panel" role="tooltip">
               <p class="modal-note" id="export-note">
-                Champions ST export uses direct stat points that map 1:1 to visible stat gains.
-                Legacy EV export uses the minimum old EV breakpoints that match the current visible stat gains.
+                Champions SP export uses the direct Champions point spread.
+                Legacy EV export is an approximation layer for older tools and Showdown-style text.
+                Final battle stats depend on species, nature, and the real Champions stat formula.
               </p>
             </div>
           </div>
@@ -2402,7 +2403,7 @@ export function renderHomePage({
       }
 
       function buildChampionsExportLine(points) {
-        return buildTrainingLine("STs", points, (key) => clampPointsValue(points[key]));
+        return buildTrainingLine("SPs", points, (key) => clampPointsValue(points[key]));
       }
 
       function buildLegacyExportLine(points) {
@@ -2415,8 +2416,8 @@ export function renderHomePage({
           return line;
         }
 
-        if (/^(?:EVs|STs):\s*.+$/im.test(trimmed)) {
-          return trimmed.replace(/^(?:EVs|STs):\s*.+$/im, line);
+        if (/^(?:EVs|SPs):\s*.+$/im.test(trimmed)) {
+          return trimmed.replace(/^(?:EVs|SPs):\s*.+$/im, line);
         }
 
         return trimmed + "\\n" + line;

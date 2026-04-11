@@ -107,7 +107,7 @@ test("Vercel convert POST handler rejects partially numeric junk input", async (
   });
 });
 
-test("Vercel parse-showdown POST returns both Champions ST and legacy EV rewrites", async () => {
+test("Vercel parse-showdown POST returns both Champions SP and legacy EV rewrites", async () => {
   const app = buildApp();
   const response = await app.inject({
     headers: {
@@ -144,7 +144,7 @@ test("Vercel parse-showdown POST returns both Champions ST and legacy EV rewrite
     [
       "Gengar @ Focus Sash",
       "Ability: Cursed Body",
-      "STs: 1 Def / 32 SpA / 32 Spe",
+      "SPs: 1 Def / 32 SpA / 32 Spe",
       "Timid Nature",
       "- Shadow Ball",
     ].join("\n"),

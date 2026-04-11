@@ -12,7 +12,7 @@ import {
 } from "../domain/ev-master.js";
 import {
   buildApproximateLegacyEvLine,
-  buildChampionsStLine,
+  buildChampionsSpLine,
   parseShowdownEvs,
   rewriteShowdownTrainingLine,
 } from "../domain/showdown-parser.js";
@@ -138,7 +138,7 @@ const showdownRewriteResponseSchema = {
     championsText: {
       type: "string",
       nullable: true,
-      description: "Original Showdown text with its training line rewritten as Champions STs.",
+      description: "Original Showdown text with its training line rewritten as Champions SPs.",
     },
     legacyText: {
       type: "string",
@@ -236,9 +236,9 @@ export function registerRoutes(app: FastifyInstance): void {
   app.post("/api/parse-showdown", {
     schema: {
       tags: ["conversion"],
-      summary: "Rewrite a Showdown set into Champions STs or legacy EV equivalents",
+      summary: "Rewrite a Showdown set into Champions SPs or approximate legacy EV text",
       description:
-        "Accepts a full pasted Pokemon Showdown set, sanitizes and normalizes the raw text, extracts its EV line, converts it into canonical Champions point buckets with preserved leftover points, and returns the rewritten set text in both raw Champions ST and approximate legacy EV formats.",
+        "Accepts a full pasted Pokemon Showdown set, sanitizes and normalizes the raw text, extracts its EV line, converts it into canonical Champions point buckets with preserved leftover points, and returns the rewritten set text in both raw Champions SP format and an approximate legacy EV format.",
       body: showdownRequestSchema,
       response: {
         200: showdownRewriteResponseSchema,
@@ -250,7 +250,7 @@ export function registerRoutes(app: FastifyInstance): void {
     const evs = parseShowdownEvs(text);
     const result = evs ? convertEvToChampions(evs) : null;
     const championsText = result
-      ? rewriteShowdownTrainingLine(text, buildChampionsStLine(result))
+      ? rewriteShowdownTrainingLine(text, buildChampionsSpLine(result))
       : null;
     const legacyText = result
       ? rewriteShowdownTrainingLine(text, buildApproximateLegacyEvLine(result))

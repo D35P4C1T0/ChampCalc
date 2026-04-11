@@ -10,7 +10,7 @@ import {
 } from "../src/domain/ev-master.js";
 import {
   buildApproximateLegacyEvLine,
-  buildChampionsStLine,
+  buildChampionsSpLine,
 } from "../src/domain/showdown-parser.js";
 
 test("canonical EV thresholds map cleanly to Champions points", () => {
@@ -31,7 +31,7 @@ test("canonical EV thresholds map cleanly to Champions points", () => {
   assert.equal(canonicalEvFromChampions(32), 252);
 });
 
-test("export lines can emit Champions STs or approximate legacy EVs", () => {
+test("export lines can emit Champions SPs or approximate legacy EVs", () => {
   const points = {
     hp: 0,
     attack: 32,
@@ -42,8 +42,8 @@ test("export lines can emit Champions STs or approximate legacy EVs", () => {
   };
 
   assert.equal(
-    buildChampionsStLine(points),
-    "STs: 32 Atk / 1 SpD / 32 Spe",
+    buildChampionsSpLine(points),
+    "SPs: 32 Atk / 1 SpD / 32 Spe",
   );
   assert.equal(
     buildApproximateLegacyEvLine(points),

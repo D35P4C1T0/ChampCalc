@@ -76,14 +76,14 @@ export function buildShowdownEvsLine(evs: EvInput): string {
   return `EVs: ${parts.length > 0 ? parts.join(" / ") : "0 HP"}`;
 }
 
-export function buildChampionsStLine(
+export function buildChampionsSpLine(
   points: Pick<ConversionResult, (typeof EV_STAT_KEYS)[number]>,
 ): string {
   const parts = EV_STAT_KEYS
     .filter((key) => points[key] > 0)
     .map((key) => `${points[key]} ${INPUT_TO_SHOWDOWN_STAT[key]}`);
 
-  return `STs: ${parts.length > 0 ? parts.join(" / ") : "0 HP"}`;
+  return `SPs: ${parts.length > 0 ? parts.join(" / ") : "0 HP"}`;
 }
 
 export function buildApproximateLegacyEvLine(

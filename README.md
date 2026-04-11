@@ -12,8 +12,8 @@ It converts legacy EV spreads into the new 66-point format, supports live slider
 - independent per-stat EV -> point conversion using `floor((EV + 4) / 8)`
 - faithful import behavior that preserves leftover points instead of auto-filling to `66`
 - live Showdown `EVs:` line parsing
-- full Showdown set rewriting with both Champions `STs:` and approximate legacy `EVs:` exports
-- export modal toggle for raw Champions STs or nearest old-style EV breakpoints
+- full Showdown set rewriting with both canonical Champions `SPs:` output and approximate legacy `EVs:` output
+- export modal toggle for canonical Champions SPs or approximate legacy EV text
 - sanitized numeric inputs and normalized Showdown text on both client and backend
 - generated Swagger / OpenAPI documentation
 - public-safe validation errors for documented API routes
@@ -169,7 +169,7 @@ Response fields:
 - `found`: whether an `EVs:` line was detected
 - `evs`: the original parsed Showdown EVs
 - `result`: the converted Champions stat values
-- `championsText`: the full rewritten Showdown set using `STs: ...`
+- `championsText`: the full rewritten Showdown set using `SPs: ...`
 - `legacyText`: the full rewritten Showdown set using approximate old-style `EVs: ...`
 
 Input sanitization:
@@ -213,8 +213,10 @@ This means imported spreads can land below `66` total points, and the app preser
 
 When exporting:
 
-- `Champions ST` exports the direct point values as `STs: ...`
-- `Legacy EV` exports the minimum old EV breakpoints that match the same visible stat gains via `4 + (SP - 1) * 8`
+- `Champions SP` exports the direct point values as `SPs: ...`
+- `Legacy EV` exports minimum old EV breakpoints via `4 + (SP - 1) * 8` as an approximation layer for older tools and Showdown text
+
+Because the real Champions stat formula depends on species and nature, exported `SPs` are the canonical Champions investment format, while legacy `EVs` are still an approximation layer for older tools and Showdown text.
 
 ## Input sanitization
 
