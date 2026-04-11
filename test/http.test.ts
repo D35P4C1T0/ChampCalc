@@ -33,10 +33,32 @@ test("GET / includes hardened headers and a script nonce", async () => {
     /<meta name="description" content="Convert Pokemon Showdown EV spreads into the new 66-point Pokemon Champions format with live sliders and built-in set parsing\." \/>/,
   );
   assert.match(response.body, /type="range"[\s\S]*max="32"/);
+  assert.match(response.body, /id="pokemon-search"/);
+  assert.match(response.body, /id="nature-select"/);
+  assert.match(response.body, /class="sp-pill" aria-label="HP stat points"/);
+  assert.match(response.body, /id="hp-points">0<\/strong>[\s\S]*<span>SP<\/span>/);
   assert.match(
     response.body,
     /<link rel="canonical" href="http:\/\/localhost\/" \/>/,
   );
+  assert.match(response.body, /const lineFeed = String\.fromCharCode\(10\);/);
+  assert.match(
+    response.body,
+    /const isWhitespace = code === 9 \|\| code === 10 \|\| code === 12 \|\| code === 13 \|\| code === 32;/,
+  );
+  assert.match(
+    response.body,
+    /return Math\.floor\(getNatureMultiplier\(statKey\) \* \(baseStat \+ clampedPoints \+ 20\)\);/,
+  );
+  assert.doesNotMatch(response.body, /\.replace\(\/s\+\/g, "-"\)/);
+  assert.doesNotMatch(response.body, /char === "\\t"|char === "\\n"|char === "\\r"|char === "\\f"/);
+  assert.doesNotMatch(
+    response.body,
+    /return Math\.floor\(getNatureMultiplier\(statKey\) \* \(\(baseStat \* clampedPoints\) \+ 20\)\);/,
+  );
+  assert.equal(response.body.includes("replace(/"), false);
+  assert.equal(response.body.includes("test(/"), false);
+  assert.equal(response.body.includes("match(/"), false);
 });
 
 test("POST /api/convert rejects out-of-range EVs with a public-safe error shape", async () => {
@@ -91,7 +113,7 @@ test("POST /api/convert rejects partially numeric junk input", async () => {
   });
 });
 
-test("POST /api/parse-showdown rewrites the full set with Champions STs and legacy EVs", async () => {
+test("POST /api/parse-showdown rewrites the full set with Champions SPs and legacy EVs", async () => {
   const app = buildApp();
   const response = await app.inject({
     headers: {
@@ -128,7 +150,7 @@ test("POST /api/parse-showdown rewrites the full set with Champions STs and lega
     [
       "Pikachu @ Light Ball",
       "Ability: Static",
-      "STs: 32 Atk / 1 SpD / 32 Spe",
+      "SPs: 32 Atk / 1 SpD / 32 Spe",
       "Jolly Nature",
       "- Volt Tackle",
     ].join("\n"),
@@ -170,7 +192,7 @@ test("POST /api/parse-showdown sanitizes control characters and CRLF line ending
     [
       "Pikachu @ Light Ball",
       "Ability: Static",
-      "STs: 32 Atk / 1 SpD / 32 Spe",
+      "SPs: 32 Atk / 1 SpD / 32 Spe",
       "Jolly Nature",
     ].join("\n"),
   );
@@ -193,5 +215,5 @@ test("GET /documentation/json exposes the generated OpenAPI spec", async () => {
   assert.equal(body.openapi, "3.0.3");
   assert.equal(body.info.title, "ChampCalc API");
   assert.equal(body.paths["/api/convert"]?.get?.summary, "Convert legacy EVs to canonical Champions points");
-  assert.equal(body.paths["/api/parse-showdown"]?.post?.summary, "Rewrite a Showdown set into Champions STs or legacy EV equivalents");
+  assert.equal(body.paths["/api/parse-showdown"]?.post?.summary, "Rewrite a Showdown set into Champions SPs or approximate legacy EV text");
 });

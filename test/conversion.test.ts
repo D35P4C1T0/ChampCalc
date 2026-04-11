@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  calculateChampionsVisibleStat,
   approximateEvFromChampions,
   canonicalEvFromChampions,
   championsPointsFromEv,
@@ -10,7 +11,7 @@ import {
 } from "../src/domain/ev-master.js";
 import {
   buildApproximateLegacyEvLine,
-  buildChampionsStLine,
+  buildChampionsSpLine,
 } from "../src/domain/showdown-parser.js";
 
 test("canonical EV thresholds map cleanly to Champions points", () => {
@@ -31,7 +32,7 @@ test("canonical EV thresholds map cleanly to Champions points", () => {
   assert.equal(canonicalEvFromChampions(32), 252);
 });
 
-test("export lines can emit Champions STs or approximate legacy EVs", () => {
+test("export lines can emit Champions SPs or approximate legacy EVs", () => {
   const points = {
     hp: 0,
     attack: 32,
@@ -42,8 +43,8 @@ test("export lines can emit Champions STs or approximate legacy EVs", () => {
   };
 
   assert.equal(
-    buildChampionsStLine(points),
-    "STs: 32 Atk / 1 SpD / 32 Spe",
+    buildChampionsSpLine(points),
+    "SPs: 32 Atk / 1 SpD / 32 Spe",
   );
   assert.equal(
     buildApproximateLegacyEvLine(points),
@@ -138,4 +139,35 @@ test("interactive edits clamp only the edited stat to the remaining budget", () 
     specialDefense: 0,
     speed: 0,
   });
+});
+
+test("Champions visible stat formula is additive for non-HP stats", () => {
+  assert.equal(
+    calculateChampionsVisibleStat({
+      baseStat: 75,
+      points: 32,
+      natureMultiplier: 1,
+    }),
+    127,
+  );
+
+  assert.equal(
+    calculateChampionsVisibleStat({
+      baseStat: 20,
+      points: 15,
+      natureMultiplier: 1,
+    }),
+    55,
+  );
+});
+
+test("Champions visible stat formula keeps the announced HP offset", () => {
+  assert.equal(
+    calculateChampionsVisibleStat({
+      baseStat: 165,
+      isHp: true,
+      points: 32,
+    }),
+    272,
+  );
 });
