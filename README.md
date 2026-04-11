@@ -2,18 +2,21 @@
 
 Mobile-first EV calculator built with strict TypeScript and prepared for direct deployment on Vercel.
 
-It converts legacy EV spreads into the new 66-point format, supports live slider editing, and parses pasted Showdown sets in real time.
+It converts legacy EV spreads into the new 66-point format, supports live slider editing, parses pasted Showdown sets in real time, and previews final stats with the selected Pokemon and nature.
 
 ## Features
 
 - mobile-first UI tuned for iPhone and Android
 - real-time conversion into the 66-point Champions format
+- searchable Pokemon selector with cached species data, sprite lookup, and nature-aware live stat previews
 - hard EV budget cap of `516`
 - independent per-stat EV -> point conversion using `floor((EV + 4) / 8)`
 - faithful import behavior that preserves leftover points instead of auto-filling to `66`
 - live Showdown `EVs:` line parsing
 - full Showdown set rewriting with both canonical Champions `SPs:` output and approximate legacy `EVs:` output
+- starter export generation when no set was imported, using the selected Pokemon, current nature, and current SP or EV spread
 - export modal toggle for canonical Champions SPs or approximate legacy EV text
+- mobile import flow with confirmation modal and paste-to-import support for valid full Showdown sets
 - sanitized numeric inputs and normalized Showdown text on both client and backend
 - generated Swagger / OpenAPI documentation
 - public-safe validation errors for documented API routes
@@ -62,6 +65,18 @@ pnpm check
 pnpm build
 pnpm start
 ```
+
+## Tips and keybindings
+
+- click an EV pill to type a precise value; on mobile this opens the EV edit modal
+- double-click a stat label such as `HP`, `Attack`, or `Defense` to reset only that stat to `0`
+- double-click the large total stat-points number to reset the whole spread
+- `Ctrl+click` on Windows or Linux, or `Cmd+click` on macOS, sets that stat to the maximum useful EV value
+- use `Import Showdown set` to preview and import a full Showdown set; on mobile, pasting a valid full set outside an input opens the confirmation flow
+- inside the Showdown import modal, `Ctrl+Enter` or `Cmd+Enter` previews the pasted set immediately
+- imported Showdown sets keep the full set text for export, including nicknames when present
+- if you export without importing a set first, the app generates a starter Showdown-style export with the selected Pokemon, current nature, and current `SPs:` or `EVs:` line
+- use the export toggle to switch between canonical Champions `SPs:` and approximate legacy `EVs:` for older tools
 
 ## Vercel deployment
 
@@ -217,6 +232,14 @@ When exporting:
 - `Legacy EV` exports minimum old EV breakpoints via `4 + (SP - 1) * 8` as an approximation layer for older tools and Showdown text
 
 Because the real Champions stat formula depends on species and nature, exported `SPs` are the canonical Champions investment format, while legacy `EVs` are still an approximation layer for older tools and Showdown text.
+
+## UI export behavior
+
+When you open the export modal:
+
+- if you imported a full Showdown set, the app rewrites that set and replaces the training line with either `SPs: ...` or approximate `EVs: ...`
+- if you did not import a set but selected a Pokemon, the app generates a starter Showdown-style export with the Pokemon name, the current nature, and the current `SPs:` or `EVs:` line
+- if no Pokemon is selected, export falls back to the bare training line
 
 ## Input sanitization
 

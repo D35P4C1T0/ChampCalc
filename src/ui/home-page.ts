@@ -164,24 +164,24 @@ export function renderHomePage({
     )
     .join("");
 
-  const donationLabel = DONATION_URL
-    ? "Open PayPal"
-    : "PAYPAL_URL env not set";
+  const donationLabel = DONATION_URL ? "Open PayPal" : "PAYPAL_URL env not set";
   const canonicalUrl = pageUrl ? escapeHtml(pageUrl) : null;
-  const structuredData = escapeHtml(JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    applicationCategory: "UtilitiesApplication",
-    author: {
-      "@type": "Person",
-      name: CREATOR_GITHUB_HANDLE,
-      url: CREATOR_GITHUB_URL,
-    },
-    description: PAGE_DESCRIPTION,
-    name: SITE_NAME,
-    operatingSystem: "Web",
-    url: pageUrl,
-  }));
+  const structuredData = escapeHtml(
+    JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      applicationCategory: "UtilitiesApplication",
+      author: {
+        "@type": "Person",
+        name: CREATOR_GITHUB_HANDLE,
+        url: CREATOR_GITHUB_URL,
+      },
+      description: PAGE_DESCRIPTION,
+      name: SITE_NAME,
+      operatingSystem: "Web",
+      url: pageUrl,
+    }),
+  );
 
   return `<!doctype html>
 <html lang="en">
@@ -444,7 +444,8 @@ export function renderHomePage({
       }
 
       .action-copy {
-        margin: 0;
+        margin-top: 0;
+        margin-bottom: 0;
         color: var(--text);
         font-size: 1rem;
         font-weight: 600;
@@ -452,9 +453,12 @@ export function renderHomePage({
       }
 
       .action-link {
+        display: inline-flex;
+        align-items: center;
         color: inherit;
         text-decoration: none;
         border-bottom: 1px solid rgba(236, 244, 251, 0.22);
+        line-height: 1.1;
         transition:
           color var(--motion-fast) ease,
           border-color var(--motion-fast) ease;
@@ -488,7 +492,7 @@ export function renderHomePage({
       }
 
       .hero p {
-        margin: 0.65rem 0 0;
+        margin: 0;
         max-width: 34rem;
         color: var(--muted);
         font-size: 0.94rem;
@@ -607,6 +611,11 @@ export function renderHomePage({
         align-items: center;
         gap: 1rem;
         margin-bottom: 0.55rem;
+      }
+
+      .section-head > :first-child {
+        flex: 1 1 auto;
+        min-width: 0;
       }
 
       .section-head h2 {
@@ -807,29 +816,9 @@ export function renderHomePage({
         flex: 0 0 auto;
       }
 
-      .showdown-import-sprite-shell {
-        display: none;
-        align-items: center;
-        justify-content: center;
-        width: 2.2rem;
-        height: 2.2rem;
-        border: 1px solid rgba(166, 191, 214, 0.22);
-        border-radius: 999px;
-        background: rgba(8, 18, 27, 0.78);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-        flex: 0 0 auto;
-      }
-
-      .showdown-import-sprite-shell[data-visible="true"] {
-        display: inline-flex;
-      }
-
       .showdown-import-status {
-        display: inline-flex;
-        align-items: center;
-        justify-content: flex-end;
+        display: inline-block;
         order: -1;
-        gap: 0.6rem;
         color: var(--muted);
         font-size: 0.8rem;
         font-weight: 700;
@@ -842,18 +831,7 @@ export function renderHomePage({
         color: var(--danger);
       }
 
-      .showdown-import-sprite {
-        width: 1.7rem;
-        height: 1.7rem;
-        image-rendering: pixelated;
-        object-fit: contain;
-        flex: 0 0 auto;
-        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
-      }
-
       .showdown-import-label {
-        min-width: 0;
-        flex: 1 1 auto;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -1759,8 +1737,7 @@ export function renderHomePage({
         }
 
         .section-head p {
-          margin-top: 0.16rem;
-          font-size: 0.76rem;
+          display: none;
         }
 
         .stat-card,
@@ -1832,6 +1809,29 @@ export function renderHomePage({
           margin-top: 0.62rem;
         }
 
+        .setup-grid {
+          grid-template-columns: 1fr;
+          gap: 0.56rem;
+        }
+
+        .picker-row {
+          align-items: stretch;
+        }
+
+        .picker-menu {
+          left: calc(-2.9rem - 0.48rem);
+          right: auto;
+          width: min(calc(100vw - 1.56rem), calc(100% + 2.9rem + 0.48rem));
+        }
+
+        .picker-option {
+          padding: 0.58rem 0.64rem;
+          white-space: normal;
+          overflow: visible;
+          text-overflow: clip;
+          line-height: 1.3;
+        }
+
         .showdown-import-bar {
           align-items: stretch;
           flex-direction: column;
@@ -1846,10 +1846,7 @@ export function renderHomePage({
         }
 
         .showdown-import-status {
-          order: 0;
-          max-width: none;
-          text-align: left;
-          justify-content: flex-start;
+          display: none;
         }
 
         .button-row {
@@ -2067,7 +2064,7 @@ export function renderHomePage({
                 </button>
                 <div class="action-panel">
                   <div class="action-row">
-                    <p class="action-copy ${DONATION_URL ? "" : "muted"}" id="donation-copy">
+                    <p class="action-copy ${DONATION_URL ? "" : "muted"}">
                       PayPal
                     </p>
                   ${
@@ -2126,7 +2123,7 @@ export function renderHomePage({
             <div class="section-head">
               <div>
                 <h2 id="calculator-title">Stat inputs</h2>
-                <p>Select a Pokemon, set the nature, import a set, or adjust the sliders.</p>
+                <p>Pick a Pokemon, choose a nature, import a set, or use the sliders.</p>
               </div>
               <div class="showdown-import-bar">
                 <button class="ghost-btn showdown-import-btn" id="showdown-import-btn" type="button">
@@ -2134,21 +2131,6 @@ export function renderHomePage({
                 </button>
                 <span class="showdown-import-status" id="showdown-import-status">
                   <span class="showdown-import-label" id="showdown-import-label">No Showdown set imported</span>
-                  <span
-                    class="showdown-import-sprite-shell"
-                    id="showdown-import-sprite-shell"
-                    data-visible="false"
-                    aria-hidden="true"
-                  >
-                    <img
-                      class="showdown-import-sprite"
-                      id="showdown-import-sprite"
-                      alt=""
-                      hidden
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </span>
                 </span>
               </div>
             </div>
@@ -2194,7 +2176,10 @@ export function renderHomePage({
                   <span class="setup-label">Nature</span>
                   <select class="setup-select" id="nature-select" aria-label="Pokemon nature">
                     ${natureOptions
-                      .map((nature) => `<option value="${escapeHtml(nature.name)}">${escapeHtml(renderNatureOptionLabel(nature))}</option>`)
+                      .map(
+                        (nature) =>
+                          `<option value="${escapeHtml(nature.name)}">${escapeHtml(renderNatureOptionLabel(nature))}</option>`,
+                      )
                       .join("")}
                   </select>
                 </label>
@@ -2206,7 +2191,7 @@ export function renderHomePage({
 
               <div class="toolbar">
                 <div class="button-row">
-                  <button class="ghost-btn" id="export-btn" type="button">Export to Champions</button>
+                  <button class="ghost-btn" id="export-btn" type="button">Export</button>
                   <button class="ghost-btn danger" id="reset-btn" type="button">Reset</button>
                 </div>
                 <!--
@@ -2464,15 +2449,18 @@ export function renderHomePage({
     <dialog class="reset-modal" id="tips-modal" aria-labelledby="tips-modal-title">
       <div class="reset-modal-content">
         <h3 id="tips-modal-title">Tips and keybindings</h3>
-        <p>Useful shortcuts to move faster without changing how the calculator works.</p>
+        <p>Useful shortcuts and mobile-friendly flows to move faster without losing accuracy.</p>
         <ul class="tips-list">
+          <li>Pick a Pokemon and nature first if you want the live stat preview to reflect the real Champions formula for that species.</li>
           <li>Click an EV pill to type a precise value. On mobile, it opens the EV edit modal.</li>
           <li>Double-click a stat label like HP, Attack, or Defense to reset just that stat to 0.</li>
           <li>Double-click the big total stat points number to reset the whole spread to 0.</li>
           <li>Ctrl+click on Windows or Linux, or Cmd+click on macOS, sets that stat to the maximum useful EV value.</li>
-          <li>Use Import Showdown set to bring in a full set. On mobile, pasting a valid full set outside a field opens the import confirmation.</li>
-          <li>Imported Showdown sets keep the whole set text for export, and the badge tries to show the matching Pokemon sprite.</li>
+          <li>Use Import Showdown set to bring in a full set. On mobile, pasting a valid full set outside a field opens the import confirmation modal.</li>
+          <li>Imported Showdown sets keep the whole set text for export, including nicknames when present, and the badge tries to show the matching Pokemon sprite.</li>
           <li>Inside the Showdown import modal, Ctrl+Enter or Cmd+Enter previews the pasted set immediately.</li>
+          <li>If you export without importing a set first, the app builds a starter Showdown-style export with the selected Pokemon, current nature, and SP or EV line.</li>
+          <li>Use the export toggle to switch between canonical Champions SPs and approximate legacy EV breakpoints for older tools.</li>
         </ul>
         <div class="reset-modal-actions">
           <button class="primary-btn" id="tips-close-btn" type="button">Close</button>
@@ -2509,11 +2497,11 @@ export function renderHomePage({
       const statKeys = ${JSON.stringify(EV_STAT_KEYS)};
       const maxShowdownTextLength = ${JSON.stringify(MAX_SHOWDOWN_TEXT_LENGTH)};
       const introSeenStorageKey = "champcalc:intro-seen:v1";
-      const pokemonListCacheKey = "champcalc:pokemon-list:v1";
-      const pokemonDetailsCachePrefix = "champcalc:pokemon-details:v1:";
-      const selectedPokemonStorageKey = "champcalc:selected-pokemon:v1";
+      const pokemonListCacheKey = "champcalc:pokemon-list:v2";
+      const pokemonDetailsCachePrefix = "champcalc:pokemon-details:v2:";
+      const selectedPokemonStorageKey = "champcalc:selected-pokemon:v2";
       const selectedNatureStorageKey = "champcalc:selected-nature:v1";
-      const spriteCachePrefix = "champcalc:pokemon-sprite:v1:";
+      const spriteCachePrefix = "champcalc:pokemon-sprite:v2:";
       const pokemonListCacheTtlMs = 1000 * 60 * 60 * 24 * 7;
       const pokemonDetailsCacheTtlMs = 1000 * 60 * 60 * 24 * 30;
       const spriteCacheTtlMs = 1000 * 60 * 60 * 24 * 30;
@@ -2556,8 +2544,6 @@ export function renderHomePage({
       const introCloseButton = document.querySelector("#intro-close-btn");
       const showdownImportButton = document.querySelector("#showdown-import-btn");
       const showdownImportLabel = document.querySelector("#showdown-import-label");
-      const showdownImportSpriteShell = document.querySelector("#showdown-import-sprite-shell");
-      const showdownImportSprite = document.querySelector("#showdown-import-sprite");
       const showdownImportStatus = document.querySelector("#showdown-import-status");
       const showdownImportModal = document.querySelector("#showdown-import-modal");
       const showdownImportInput = document.querySelector("#showdown-import-input");
@@ -2583,7 +2569,6 @@ export function renderHomePage({
       let activeEvEditor = null;
       let importedShowdownText = "";
       let pendingShowdownText = "";
-      let latestSpriteLookupId = 0;
       let pokemonEntries = [];
       let filteredPokemonEntries = [];
       let activePokemonResultIndex = -1;
@@ -2825,6 +2810,22 @@ export function renderHomePage({
         return trimmed + lineFeed + line;
       }
 
+      function buildStarterShowdownSet(line) {
+        const pokemonName = selectedPokemon?.displayName?.trim()
+          || humanizePokemonName(selectedPokemon?.apiName ?? "").trim();
+
+        if (!pokemonName) {
+          return line;
+        }
+
+        const natureName = getNatureProfile()?.name ?? "Hardy";
+        return [
+          pokemonName,
+          natureName + " Nature",
+          line,
+        ].join(lineFeed);
+      }
+
       function getShowdownTitle(text) {
         const firstLine = text
           .split(lineFeed)
@@ -2869,24 +2870,13 @@ export function renderHomePage({
         };
       }
 
-      function setShowdownImportStatus(message, isWarning = false, title = "", spriteUrl = "") {
+      function setShowdownImportStatus(message, isWarning = false, title = "") {
         if (!(showdownImportStatus instanceof HTMLElement)) {
           return;
         }
 
         if (showdownImportLabel instanceof HTMLElement) {
           showdownImportLabel.textContent = message;
-        }
-        if (showdownImportSpriteShell instanceof HTMLElement && showdownImportSprite instanceof HTMLImageElement) {
-          if (spriteUrl) {
-            showdownImportSprite.src = spriteUrl;
-            showdownImportSprite.hidden = false;
-            showdownImportSpriteShell.dataset.visible = "true";
-          } else {
-            showdownImportSprite.removeAttribute("src");
-            showdownImportSprite.hidden = true;
-            showdownImportSpriteShell.dataset.visible = "false";
-          }
         }
         showdownImportStatus.classList.toggle("warning", isWarning);
         showdownImportStatus.title = title;
@@ -3386,7 +3376,9 @@ export function renderHomePage({
               ? cached
               : (() => {
                   const legacyValue = getStorageItem(spriteCachePrefix + normalized);
-                  return /^https?:\/\//.test(legacyValue) ? legacyValue : "";
+                  return legacyValue.startsWith("https://") || legacyValue.startsWith("http://")
+                    ? legacyValue
+                    : "";
                 })();
           if (value) {
             spriteMemoryCache.set(normalized, value);
@@ -3616,7 +3608,7 @@ export function renderHomePage({
         }
 
         if (normalized.endsWith("-totem")) {
-          candidates.add(normalized.replace(/-totem$/, ""));
+          candidates.add(normalized.slice(0, -6));
         }
 
         if (normalized.startsWith("mimikyu-")) {
@@ -3629,10 +3621,6 @@ export function renderHomePage({
 
         if (normalized.startsWith("morpeko-")) {
           candidates.add("morpeko-full-belly");
-        }
-
-        if (normalized.startsWith("basculin-")) {
-          candidates.add(normalized.replace(/-white-striped$/, "-white-striped"));
         }
 
         return Array.from(candidates);
@@ -3708,7 +3696,7 @@ export function renderHomePage({
           return baseStat + clampedPoints + 75;
         }
 
-        return Math.floor(getNatureMultiplier(statKey) * ((baseStat * clampedPoints) + 20));
+        return Math.floor(getNatureMultiplier(statKey) * (baseStat + clampedPoints + 20));
       }
 
       function updateBaseStatDisplays(isLoading = false) {
@@ -4027,48 +4015,6 @@ export function renderHomePage({
         return selectPokemonByApiName(match.apiName, options);
       }
 
-      async function fetchPokemonSpriteUrl(speciesName) {
-        const candidates = buildPokemonApiCandidates(speciesName);
-        if (candidates.length === 0) {
-          return "";
-        }
-
-        for (const candidate of candidates) {
-          const cachedUrl = readCachedSpriteUrl(candidate);
-          if (cachedUrl.url) {
-            if (!cachedUrl.fresh) {
-              void queuePokemonDetailsRefresh(candidate);
-            }
-            return cachedUrl.url;
-          }
-        }
-
-        for (const candidate of candidates) {
-          try {
-            const details = await loadPokemonDetails(candidate);
-            const spriteUrl = typeof details?.spriteUrl === "string" ? details.spriteUrl : "";
-            if (spriteUrl) {
-              writeCachedSpriteUrl(candidate, spriteUrl);
-              return spriteUrl;
-            }
-          } catch {
-            return "";
-          }
-        }
-
-        return "";
-      }
-
-      async function refreshShowdownImportSprite(speciesName, fallbackMessage, isWarning, title) {
-        const lookupId = ++latestSpriteLookupId;
-        const spriteUrl = await fetchPokemonSpriteUrl(speciesName);
-        if (lookupId !== latestSpriteLookupId) {
-          return;
-        }
-
-        setShowdownImportStatus(fallbackMessage, isWarning, title, spriteUrl);
-      }
-
       function previewShowdownImport(text) {
         const parsed = parseWholeShowdownSet(text);
         if (!parsed) {
@@ -4110,21 +4056,12 @@ export function renderHomePage({
         if (parsed.speciesName) {
           void selectPokemonFromSpecies(parsed.speciesName);
         }
-        if (parsed.speciesName) {
-          void refreshShowdownImportSprite(
-            parsed.speciesName,
-            parsed.displayName || parsed.speciesName,
-            parsed.total > maxTotal,
-            parsed.title,
-          );
-        }
         compute();
       }
 
       function clearImportedShowdownSet() {
         importedShowdownText = "";
         pendingShowdownText = "";
-        latestSpriteLookupId += 1;
         syncShowdownImportInput();
 
         if (showdownConfirmPreview instanceof HTMLTextAreaElement) {
@@ -4337,6 +4274,10 @@ export function renderHomePage({
         const line = exportMode === "legacy"
           ? buildLegacyExportLine(points)
           : buildChampionsExportLine(points);
+
+        if (!importedShowdownText.trim()) {
+          return buildStarterShowdownSet(line);
+        }
 
         return rewriteOrAppendTrainingLine(importedShowdownText, line);
       }

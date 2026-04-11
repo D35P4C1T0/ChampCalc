@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  calculateChampionsVisibleStat,
   approximateEvFromChampions,
   canonicalEvFromChampions,
   championsPointsFromEv,
@@ -138,4 +139,35 @@ test("interactive edits clamp only the edited stat to the remaining budget", () 
     specialDefense: 0,
     speed: 0,
   });
+});
+
+test("Champions visible stat formula is additive for non-HP stats", () => {
+  assert.equal(
+    calculateChampionsVisibleStat({
+      baseStat: 75,
+      points: 32,
+      natureMultiplier: 1,
+    }),
+    127,
+  );
+
+  assert.equal(
+    calculateChampionsVisibleStat({
+      baseStat: 20,
+      points: 15,
+      natureMultiplier: 1,
+    }),
+    55,
+  );
+});
+
+test("Champions visible stat formula keeps the announced HP offset", () => {
+  assert.equal(
+    calculateChampionsVisibleStat({
+      baseStat: 165,
+      isHp: true,
+      points: 32,
+    }),
+    272,
+  );
 });

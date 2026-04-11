@@ -44,8 +44,19 @@ test("GET / includes hardened headers and a script nonce", async () => {
     response.body,
     /const isWhitespace = code === 9 \|\| code === 10 \|\| code === 12 \|\| code === 13 \|\| code === 32;/,
   );
+  assert.match(
+    response.body,
+    /return Math\.floor\(getNatureMultiplier\(statKey\) \* \(baseStat \+ clampedPoints \+ 20\)\);/,
+  );
   assert.doesNotMatch(response.body, /\.replace\(\/s\+\/g, "-"\)/);
   assert.doesNotMatch(response.body, /char === "\\t"|char === "\\n"|char === "\\r"|char === "\\f"/);
+  assert.doesNotMatch(
+    response.body,
+    /return Math\.floor\(getNatureMultiplier\(statKey\) \* \(\(baseStat \* clampedPoints\) \+ 20\)\);/,
+  );
+  assert.equal(response.body.includes("replace(/"), false);
+  assert.equal(response.body.includes("test(/"), false);
+  assert.equal(response.body.includes("match(/"), false);
 });
 
 test("POST /api/convert rejects out-of-range EVs with a public-safe error shape", async () => {

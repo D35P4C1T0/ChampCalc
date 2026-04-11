@@ -33,6 +33,13 @@ export interface ConversionResult {
   isOverCap: boolean;
 }
 
+export interface ChampionsVisibleStatInput {
+  baseStat: number;
+  isHp?: boolean;
+  natureMultiplier?: number;
+  points: number;
+}
+
 export function convertEvToChampions(input: EvInput): ConversionResult {
   const converted = Object.fromEntries(
     EV_STAT_KEYS.map((key) => [key, championsPointsFromEv(input[key])]),
@@ -104,6 +111,28 @@ export function approximateEvFromChampions(value: number): number {
 }
 
 export const canonicalEvFromChampions = approximateEvFromChampions;
+
+export function calculateChampionsVisibleStat({
+  baseStat,
+  isHp = false,
+  natureMultiplier = 1,
+  points,
+}: ChampionsVisibleStatInput): number {
+  const clampedBaseStat = Number.isFinite(baseStat)
+    ? Math.max(0, Math.trunc(baseStat))
+    : 0;
+  const clampedPoints = clampChampionsValue(points);
+
+  if (isHp) {
+    return clampedBaseStat + clampedPoints + 75;
+  }
+
+  const safeNatureMultiplier = Number.isFinite(natureMultiplier)
+    ? natureMultiplier
+    : 1;
+
+  return Math.floor(safeNatureMultiplier * (clampedBaseStat + clampedPoints + 20));
+}
 
 function clampEvValue(value: number): number {
   if (!Number.isFinite(value)) {
