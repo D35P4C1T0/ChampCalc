@@ -33,10 +33,19 @@ test("GET / includes hardened headers and a script nonce", async () => {
     /<meta name="description" content="Convert Pokemon Showdown EV spreads into the new 66-point Pokemon Champions format with live sliders and built-in set parsing\." \/>/,
   );
   assert.match(response.body, /type="range"[\s\S]*max="32"/);
+  assert.match(response.body, /id="pokemon-search"/);
+  assert.match(response.body, /id="nature-select"/);
   assert.match(
     response.body,
     /<link rel="canonical" href="http:\/\/localhost\/" \/>/,
   );
+  assert.match(response.body, /const lineFeed = String\.fromCharCode\(10\);/);
+  assert.match(
+    response.body,
+    /const isWhitespace = code === 9 \|\| code === 10 \|\| code === 12 \|\| code === 13 \|\| code === 32;/,
+  );
+  assert.doesNotMatch(response.body, /\.replace\(\/s\+\/g, "-"\)/);
+  assert.doesNotMatch(response.body, /char === "\\t"|char === "\\n"|char === "\\r"|char === "\\f"/);
 });
 
 test("POST /api/convert rejects out-of-range EVs with a public-safe error shape", async () => {
