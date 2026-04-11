@@ -35,6 +35,8 @@ test("GET / includes hardened headers and a script nonce", async () => {
   assert.match(response.body, /type="range"[\s\S]*max="32"/);
   assert.match(response.body, /id="pokemon-search"/);
   assert.match(response.body, /id="nature-select"/);
+  assert.match(response.body, /class="sp-pill" aria-label="HP stat points"/);
+  assert.match(response.body, /id="hp-points">0<\/strong>[\s\S]*<span>SP<\/span>/);
   assert.match(
     response.body,
     /<link rel="canonical" href="http:\/\/localhost\/" \/>/,
