@@ -1626,13 +1626,19 @@ export const HOME_PAGE_STYLES = String.raw`      /* Foundation */
         }
 
         .picker-row {
+          position: relative;
           align-items: stretch;
         }
 
+        .picker-row .picker {
+          position: static;
+        }
+
         .picker-menu {
-          left: calc(-2.9rem - 0.48rem);
-          right: auto;
-          width: min(calc(100vw - 1.56rem), calc(100% + 2.9rem + 0.48rem));
+          left: 0;
+          right: 0;
+          width: auto;
+          max-width: 100%;
         }
 
         .picker-option {
