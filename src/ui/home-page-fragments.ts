@@ -271,7 +271,7 @@ function renderCalculatorSection(): string {
         </div>
         <div class="showdown-import-bar">
           <button class="ghost-btn showdown-import-btn" id="showdown-import-btn" type="button">
-            <span>Import Showdown set</span>
+            <span>Import Showdown EVs/SPs set</span>
           </button>
           <span class="showdown-import-status" id="showdown-import-status">
             <span class="showdown-import-label" id="showdown-import-label">No Showdown set imported</span>
@@ -435,8 +435,8 @@ function renderDialogs(donationLabel: string): string {
 
     <dialog class="reset-modal" id="showdown-import-modal" aria-labelledby="showdown-import-modal-title">
       <div class="reset-modal-content">
-        <h3 id="showdown-import-modal-title">Paste a Showdown set</h3>
-        <p>Paste the full set text. We will preview it before importing.</p>
+        <h3 id="showdown-import-modal-title">Paste a Showdown EVs/SPs set</h3>
+        <p>Paste the full set text with one EVs or SPs line. We will preview it before importing.</p>
         <label class="modal-field" for="showdown-import-input">
           <span class="modal-label">Showdown set</span>
           <textarea
@@ -444,11 +444,11 @@ function renderDialogs(donationLabel: string): string {
             id="showdown-import-input"
             maxlength="${MAX_SHOWDOWN_TEXT_LENGTH}"
             spellcheck="false"
-            placeholder="Pikachu @ Light Ball&#10;Ability: Static&#10;EVs: 252 Atk / 4 SpD / 252 Spe&#10;Jolly Nature&#10;- Volt Tackle"
+            placeholder="Pikachu @ Light Ball&#10;Ability: Static&#10;SPs: 32 Atk / 1 SpD / 32 Spe&#10;Jolly Nature&#10;- Volt Tackle"
           ></textarea>
         </label>
         <p class="modal-note" id="showdown-import-feedback">
-          Paste a full Showdown set with an EVs line to preview it.
+          Paste a full Showdown set with an EVs/SPs line to preview it.
         </p>
         <div class="reset-modal-actions">
           <button class="ghost-btn" id="showdown-import-cancel-btn" type="button">Cancel</button>
@@ -610,7 +610,7 @@ function renderDialogs(donationLabel: string): string {
           <li>Double-click a stat label like HP, Attack, or Defense to reset just that stat to 0.</li>
           <li>Double-click the big total stat points number to reset the whole spread to 0.</li>
           <li>Ctrl+click on Windows or Linux, or Cmd+click on macOS, sets that stat to the maximum useful EV value.</li>
-          <li>Use Import Showdown set to bring in a full set. On mobile, pasting a valid full set outside a field opens the import confirmation modal.</li>
+          <li>Use Import Showdown EVs/SPs set to bring in a full set. On mobile, pasting a valid full set outside a field opens the import confirmation modal.</li>
           <li>Imported Showdown sets keep the whole set text for export, including nicknames when present, and the badge tries to show the matching Pokemon sprite.</li>
           <li>Inside the Showdown import modal, Ctrl+Enter or Cmd+Enter previews the pasted set immediately.</li>
           <li>If you export without importing a set first, the app builds a starter Showdown-style export with the selected Pokemon, current nature, and SP or EV line.</li>

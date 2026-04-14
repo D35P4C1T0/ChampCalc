@@ -146,6 +146,8 @@ export const HOME_PAGE_STYLES = String.raw`      /* Foundation */
       }
 
       .hero-copy {
+        display: grid;
+        gap: 0.7rem;
         min-width: 0;
       }
 
@@ -510,8 +512,8 @@ export const HOME_PAGE_STYLES = String.raw`      /* Foundation */
         display: none;
         align-items: center;
         justify-content: center;
-        width: 2.42rem;
-        height: 2.42rem;
+        width: 3rem;
+        height: 3rem;
         border: 1px solid rgba(166, 191, 214, 0.24);
         border-radius: 999px;
         background: rgba(8, 18, 27, 0.78);
@@ -526,8 +528,8 @@ export const HOME_PAGE_STYLES = String.raw`      /* Foundation */
       }
 
       .pokemon-selected-sprite {
-        width: 1.82rem;
-        height: 1.82rem;
+        width: 2.4rem;
+        height: 2.4rem;
         object-fit: contain;
         image-rendering: pixelated;
         filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));

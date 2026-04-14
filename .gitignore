@@ -7,3 +7,7 @@ dist
 *.log
 coverage
 .vercel
+
+# Local Codex artifacts
+.codex
+.codex/

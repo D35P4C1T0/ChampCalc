@@ -12,7 +12,7 @@ It converts legacy EV spreads into the new 66-point format, supports live slider
 - hard EV budget cap of `516`
 - independent per-stat EV -> point conversion using `floor((EV + 4) / 8)`
 - faithful import behavior that preserves leftover points instead of auto-filling to `66`
-- live Showdown `EVs:` line parsing
+- support for importing Showdown sets that use either `EVs:` or `SPs:`
 - full Showdown set rewriting with both canonical Champions `SPs:` output and approximate legacy `EVs:` output
 - starter export generation when no set was imported, using the selected Pokemon, current nature, and current SP or EV spread
 - export modal toggle for canonical Champions SPs or approximate legacy EV text
@@ -72,7 +72,7 @@ pnpm start
 - double-click a stat label such as `HP`, `Attack`, or `Defense` to reset only that stat to `0`
 - double-click the large total stat-points number to reset the whole spread
 - `Ctrl+click` on Windows or Linux, or `Cmd+click` on macOS, sets that stat to the maximum useful EV value
-- use `Import Showdown set` to preview and import a full Showdown set; on mobile, pasting a valid full set outside an input opens the confirmation flow
+- use `Import Showdown EVs/SPs set` to preview and import a full Showdown set; on mobile, pasting a valid full set outside an input opens the same confirmation flow automatically
 - inside the Showdown import modal, `Ctrl+Enter` or `Cmd+Enter` previews the pasted set immediately
 - imported Showdown sets keep the full set text for export, including nicknames when present
 - if you export without importing a set first, the app generates a starter Showdown-style export with the selected Pokemon, current nature, and current `SPs:` or `EVs:` line
@@ -171,7 +171,9 @@ Conversion note:
 
 ### `POST /api/parse-showdown`
 
-Accepts a full pasted Showdown set, parses the `EVs:` line, converts it to Champions values, and returns the full set text with that line rewritten in two formats.
+Accepts a full pasted Showdown set, looks for exactly one training line, and supports either the legacy `EVs:` format or the app's native `SPs:` format.
+
+`EVs:` lines are converted into Champions points. `SPs:` lines are parsed directly, with each stat clamped to `32`. If the pasted set contains both `EVs:` and `SPs:` lines, or if the final SP total still exceeds `66`, the request is rejected as malformed.
 
 ```json
 {
@@ -181,11 +183,19 @@ Accepts a full pasted Showdown set, parses the `EVs:` line, converts it to Champ
 
 Response fields:
 
-- `found`: whether an `EVs:` line was detected
-- `evs`: the original parsed Showdown EVs
-- `result`: the converted Champions stat values
+- `found`: whether an `EVs:` or `SPs:` line was detected
+- `format`: which training line format was parsed, or `null` if none was found
+- `evs`: the original parsed Showdown EVs when the input used `EVs:`, otherwise `null`
+- `result`: the converted Champions stat values, or the parsed SPs directly when the input used `SPs:`
 - `championsText`: the full rewritten Showdown set using `SPs: ...`
 - `legacyText`: the full rewritten Showdown set using approximate old-style `EVs: ...`
+
+Validation notes:
+
+- only one training line is allowed per set
+- mixed `EVs:` and `SPs:` input is rejected
+- `SPs:` values above `32` are clamped per stat before total validation
+- if the resulting SP total is still above `66`, the set is rejected
 
 Input sanitization:
 

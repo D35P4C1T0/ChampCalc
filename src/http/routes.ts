@@ -5,15 +5,16 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { convertRequestSchema } from "../contracts/convert.js";
 import { showdownSetSchema } from "../contracts/showdown.js";
 import {
-  MAX_EV,
   MAX_TOTAL_CHAMPIONS,
+  MAX_EV,
   MIN_EV,
   convertEvToChampions,
+  sumChampionsInput,
 } from "../domain/ev-master.js";
 import {
   buildApproximateLegacyEvLine,
   buildChampionsSpLine,
-  parseShowdownEvs,
+  parseShowdownTrainingLine,
   rewriteShowdownTrainingLine,
 } from "../domain/showdown-parser.js";
 import { renderHomePage } from "../ui/home-page.js";
@@ -111,7 +112,7 @@ const showdownRequestSchema = {
       type: "string",
       maxLength: 10000,
       description:
-        "Full Pokemon Showdown set text, including the EVs line to convert. Input is normalized to LF line endings, stripped of control characters, trimmed, and capped at 10,000 characters.",
+        "Full Pokemon Showdown set text, including a single EVs or SPs line to convert. Input is normalized to LF line endings, stripped of control characters, trimmed, and capped at 10,000 characters.",
     },
   },
 } as const;
@@ -119,21 +120,27 @@ const showdownRequestSchema = {
 const showdownRewriteResponseSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["evs", "found", "result", "championsText", "legacyText"],
+  required: ["evs", "format", "found", "result", "championsText", "legacyText"],
   properties: {
     evs: {
       ...resolvedEvInputSchema,
       nullable: true,
-      description: "Original EVs parsed from the pasted Showdown set.",
+      description: "Original EVs parsed from the pasted Showdown set when the training line used EVs.",
+    },
+    format: {
+      type: "string",
+      nullable: true,
+      enum: ["EVs", "SPs", null],
+      description: "Which training line format was parsed from the pasted Showdown set.",
     },
     found: {
       type: "boolean",
-      description: "Whether an EVs line was detected in the pasted Showdown content.",
+      description: "Whether an EVs or SPs line was detected in the pasted Showdown content.",
     },
     result: {
       ...conversionResultSchema,
       nullable: true,
-      description: "Converted Champions points for the parsed set.",
+      description: "Converted Champions points for the parsed set, or the parsed SPs directly when the input used SPs.",
     },
     championsText: {
       type: "string",
@@ -238,17 +245,45 @@ export function registerRoutes(app: FastifyInstance): void {
       tags: ["conversion"],
       summary: "Rewrite a Showdown set into Champions SPs or approximate legacy EV text",
       description:
-        "Accepts a full pasted Pokemon Showdown set, sanitizes and normalizes the raw text, extracts its EV line, converts it into canonical Champions point buckets with preserved leftover points, and returns the rewritten set text in both raw Champions SP format and an approximate legacy EV format.",
+        "Accepts a full pasted Pokemon Showdown set, sanitizes and normalizes the raw text, extracts a single EVs or SPs line, converts it into canonical Champions point buckets, and returns the rewritten set text in both raw Champions SP format and an approximate legacy EV format.",
       body: showdownRequestSchema,
       response: {
         200: showdownRewriteResponseSchema,
         400: validationErrorSchema,
       },
     },
-  }, async (request) => {
+  }, async (request, reply) => {
     const { text } = showdownSetSchema.parse(request.body);
-    const evs = parseShowdownEvs(text);
-    const result = evs ? convertEvToChampions(evs) : null;
+    const parsed = parseShowdownTrainingLine(text);
+    if (parsed.kind === "error") {
+      return reply.status(400).send({
+        error: "Invalid request payload",
+        details: [
+          {
+            field: "text",
+            message: parsed.message,
+          },
+        ],
+      });
+    }
+
+    if (parsed.kind === "not_found") {
+      return {
+        evs: null,
+        format: null,
+        found: false,
+        result: null,
+        championsText: null,
+        legacyText: null,
+      };
+    }
+
+    const result = {
+      ...parsed.points,
+      total: sumChampionsInput(parsed.points),
+      maxTotal: MAX_TOTAL_CHAMPIONS,
+      isOverCap: false,
+    };
     const championsText = result
       ? rewriteShowdownTrainingLine(text, buildChampionsSpLine(result))
       : null;
@@ -257,8 +292,9 @@ export function registerRoutes(app: FastifyInstance): void {
       : null;
 
     return {
-      evs,
-      found: evs !== null,
+      evs: parsed.evs,
+      format: parsed.format,
+      found: true,
       result,
       championsText,
       legacyText,

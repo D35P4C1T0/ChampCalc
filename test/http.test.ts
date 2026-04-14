@@ -37,6 +37,7 @@ test("GET / includes hardened headers and a script nonce", async () => {
   assert.match(response.body, /id="nature-select"/);
   assert.match(response.body, /class="sp-pill" aria-label="HP stat points"/);
   assert.match(response.body, /id="hp-points">0<\/strong>[\s\S]*<span>SP<\/span>/);
+  assert.match(response.body, /Import Showdown EVs\/SPs set/);
   assert.match(
     response.body,
     /<link rel="canonical" href="http:\/\/localhost\/" \/>/,
@@ -46,6 +47,7 @@ test("GET / includes hardened headers and a script nonce", async () => {
     response.body,
     /const isWhitespace = code === 9 \|\| code === 10 \|\| code === 12 \|\| code === 13 \|\| code === 32;/,
   );
+  assert.match(response.body, /rawLabel !== "evs" && rawLabel !== "sps"/);
   assert.match(
     response.body,
     /return Math\.floor\(getNatureMultiplier\(statKey\) \* \(baseStat \+ clampedPoints \+ 20\)\);/,
@@ -134,6 +136,7 @@ test("POST /api/parse-showdown rewrites the full set with Champions SPs and lega
   await app.close();
   const body = JSON.parse(response.body) as {
     championsText: string | null;
+    format: string | null;
     legacyText: string | null;
     found: boolean;
     result: { attack: number; specialDefense: number; speed: number; total: number } | null;
@@ -141,6 +144,7 @@ test("POST /api/parse-showdown rewrites the full set with Champions SPs and lega
 
   assert.equal(response.statusCode, 200);
   assert.equal(body.found, true);
+  assert.equal(body.format, "EVs");
   assert.equal(body.result?.attack, 32);
   assert.equal(body.result?.specialDefense, 1);
   assert.equal(body.result?.speed, 32);
@@ -167,6 +171,95 @@ test("POST /api/parse-showdown rewrites the full set with Champions SPs and lega
   );
 });
 
+test("POST /api/parse-showdown accepts Champions SPs input too", async () => {
+  const app = buildApp();
+  const response = await app.inject({
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    payload: JSON.stringify({
+      text: [
+        "Gengar @ Focus Sash",
+        "Ability: Cursed Body",
+        "SPs: 1 Def / 32 SpA / 32 Spe",
+        "Timid Nature",
+        "- Shadow Ball",
+      ].join("\n"),
+    }),
+    url: "/api/parse-showdown",
+  });
+  await app.close();
+  const body = JSON.parse(response.body) as {
+    championsText: string | null;
+    evs: Record<string, number> | null;
+    format: string | null;
+    legacyText: string | null;
+    found: boolean;
+    result: { defense: number; specialAttack: number; speed: number; total: number } | null;
+  };
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(body.found, true);
+  assert.equal(body.format, "SPs");
+  assert.equal(body.evs, null);
+  assert.equal(body.result?.defense, 1);
+  assert.equal(body.result?.specialAttack, 32);
+  assert.equal(body.result?.speed, 32);
+  assert.equal(body.result?.total, 65);
+  assert.equal(
+    body.championsText,
+    [
+      "Gengar @ Focus Sash",
+      "Ability: Cursed Body",
+      "SPs: 1 Def / 32 SpA / 32 Spe",
+      "Timid Nature",
+      "- Shadow Ball",
+    ].join("\n"),
+  );
+  assert.equal(
+    body.legacyText,
+    [
+      "Gengar @ Focus Sash",
+      "Ability: Cursed Body",
+      "EVs: 4 Def / 252 SpA / 252 Spe",
+      "Timid Nature",
+      "- Shadow Ball",
+    ].join("\n"),
+  );
+});
+
+test("POST /api/parse-showdown rejects malformed mixed EV and SP lines", async () => {
+  const app = buildApp();
+  const response = await app.inject({
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    payload: JSON.stringify({
+      text: [
+        "Pikachu @ Light Ball",
+        "EVs: 252 Atk / 4 SpD / 252 Spe",
+        "SPs: 32 Atk / 1 SpD / 32 Spe",
+        "Jolly Nature",
+      ].join("\n"),
+    }),
+    url: "/api/parse-showdown",
+  });
+  await app.close();
+
+  assert.equal(response.statusCode, 400);
+  assert.deepEqual(JSON.parse(response.body), {
+    error: "Invalid request payload",
+    details: [
+      {
+        field: "text",
+        message: "Showdown set is malformed: include only one training line type, either EVs or SPs.",
+      },
+    ],
+  });
+});
+
 test("POST /api/parse-showdown sanitizes control characters and CRLF line endings", async () => {
   const app = buildApp();
   const response = await app.inject({
@@ -182,11 +275,13 @@ test("POST /api/parse-showdown sanitizes control characters and CRLF line ending
   await app.close();
   const body = JSON.parse(response.body) as {
     championsText: string | null;
+    format: string | null;
     found: boolean;
   };
 
   assert.equal(response.statusCode, 200);
   assert.equal(body.found, true);
+  assert.equal(body.format, "EVs");
   assert.equal(
     body.championsText,
     [
