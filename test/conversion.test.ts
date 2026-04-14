@@ -12,6 +12,8 @@ import {
 import {
   buildApproximateLegacyEvLine,
   buildChampionsSpLine,
+  parseShowdownTrainingLine,
+  rewriteShowdownTrainingLine,
 } from "../src/domain/showdown-parser.js";
 
 test("canonical EV thresholds map cleanly to Champions points", () => {
@@ -49,6 +51,57 @@ test("export lines can emit Champions SPs or approximate legacy EVs", () => {
   assert.equal(
     buildApproximateLegacyEvLine(points),
     "EVs: 252 Atk / 4 SpD / 252 Spe",
+  );
+});
+
+test("Showdown parser accepts Champions SP lines directly", () => {
+  const parsed = parseShowdownTrainingLine("Gengar\nSPs: 1 Def / 32 SpA / 32 Spe\nTimid Nature");
+
+  assert.deepEqual(parsed, {
+    kind: "ok",
+    format: "SPs",
+    evs: null,
+    points: {
+      hp: 0,
+      attack: 0,
+      defense: 1,
+      specialAttack: 32,
+      specialDefense: 0,
+      speed: 32,
+    },
+  });
+});
+
+test("Showdown parser rejects malformed mixed EV and SP lines", () => {
+  const parsed = parseShowdownTrainingLine([
+    "Pikachu @ Light Ball",
+    "EVs: 252 Atk / 4 SpD / 252 Spe",
+    "SPs: 32 Atk / 1 SpD / 32 Spe",
+  ].join("\n"));
+
+  assert.deepEqual(parsed, {
+    kind: "error",
+    message: "Showdown set is malformed: include only one training line type, either EVs or SPs.",
+  });
+});
+
+test("rewriting a Showdown training line replaces SPs too", () => {
+  const rewritten = rewriteShowdownTrainingLine(
+    [
+      "Gengar @ Focus Sash",
+      "SPs: 1 Def / 32 SpA / 32 Spe",
+      "Timid Nature",
+    ].join("\n"),
+    "EVs: 4 Def / 252 SpA / 252 Spe",
+  );
+
+  assert.equal(
+    rewritten,
+    [
+      "Gengar @ Focus Sash",
+      "EVs: 4 Def / 252 SpA / 252 Spe",
+      "Timid Nature",
+    ].join("\n"),
   );
 });
 

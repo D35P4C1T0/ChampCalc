@@ -128,6 +128,7 @@ test("Vercel parse-showdown POST returns both Champions SP and legacy EV rewrite
   await app.close();
   const body = JSON.parse(response.body) as {
     championsText: string | null;
+    format: string | null;
     legacyText: string | null;
     found: boolean;
     result: { defense: number; specialAttack: number; speed: number; total: number } | null;
@@ -135,6 +136,7 @@ test("Vercel parse-showdown POST returns both Champions SP and legacy EV rewrite
 
   assert.equal(response.statusCode, 200);
   assert.equal(body.found, true);
+  assert.equal(body.format, "EVs");
   assert.equal(body.result?.defense, 1);
   assert.equal(body.result?.specialAttack, 32);
   assert.equal(body.result?.speed, 32);
@@ -159,4 +161,97 @@ test("Vercel parse-showdown POST returns both Champions SP and legacy EV rewrite
       "- Shadow Ball",
     ].join("\n"),
   );
+});
+
+test("Vercel parse-showdown POST accepts Champions SPs input too", async () => {
+  const app = buildApp();
+  const response = await app.inject({
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    payload: JSON.stringify({
+      text: [
+        "Gengar @ Focus Sash",
+        "Ability: Cursed Body",
+        "SPs: 1 Def / 32 SpA / 32 Spe",
+        "Timid Nature",
+        "- Shadow Ball",
+      ].join("\n"),
+    }),
+    url: "/api/parse-showdown",
+  });
+  await app.close();
+  const body = JSON.parse(response.body) as {
+    championsText: string | null;
+    evs: Record<string, number> | null;
+    format: string | null;
+    legacyText: string | null;
+    found: boolean;
+    result: { defense: number; specialAttack: number; speed: number; total: number } | null;
+  };
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(body.found, true);
+  assert.equal(body.format, "SPs");
+  assert.equal(body.evs, null);
+  assert.equal(body.result?.defense, 1);
+  assert.equal(body.result?.specialAttack, 32);
+  assert.equal(body.result?.speed, 32);
+  assert.equal(body.result?.total, 65);
+  assert.equal(
+    body.championsText,
+    [
+      "Gengar @ Focus Sash",
+      "Ability: Cursed Body",
+      "SPs: 1 Def / 32 SpA / 32 Spe",
+      "Timid Nature",
+      "- Shadow Ball",
+    ].join("\n"),
+  );
+  assert.equal(
+    body.legacyText,
+    [
+      "Gengar @ Focus Sash",
+      "Ability: Cursed Body",
+      "EVs: 4 Def / 252 SpA / 252 Spe",
+      "Timid Nature",
+      "- Shadow Ball",
+    ].join("\n"),
+  );
+});
+
+test("Vercel parse-showdown POST rejects malformed mixed EV and SP lines", async () => {
+  const app = buildApp();
+  const response = await app.inject({
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+    payload: JSON.stringify({
+      text: [
+        "Pikachu @ Light Ball",
+        "EVs: 252 Atk / 4 SpD / 252 Spe",
+        "SPs: 32 Atk / 1 SpD / 32 Spe",
+        "Jolly Nature",
+      ].join("\n"),
+    }),
+    url: "/api/parse-showdown",
+  });
+  await app.close();
+  const body = JSON.parse(response.body) as {
+    details: Array<{ field: string; message: string }>;
+    error: string;
+  };
+
+  assert.equal(response.statusCode, 400);
+  assert.deepEqual(body, {
+    error: "Invalid request payload",
+    details: [
+      {
+        field: "text",
+        message: "Showdown set is malformed: include only one training line type, either EVs or SPs.",
+      },
+    ],
+  });
 });

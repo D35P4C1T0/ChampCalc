@@ -321,17 +321,8 @@ ${HOME_PAGE_STYLES}
         return Object.values(points).reduce((sum, value) => sum + legacyEvFromPoints(value), 0);
       }
 
-      function parseShowdownEvs(text) {
-        const line = text
-          .split(lineFeed)
-          .map((candidate) => candidate.trim())
-          .find((candidate) => candidate.toLowerCase().startsWith("evs:"));
-
-        if (!line) {
-          return null;
-        }
-
-        const values = {
+      function emptyShowdownValues() {
+        return {
           hp: 0,
           attack: 0,
           defense: 0,
@@ -339,10 +330,12 @@ ${HOME_PAGE_STYLES}
           specialDefense: 0,
           speed: 0,
         };
+      }
 
+      function parseTrainingPayload(payload, maxValue) {
+        const values = emptyShowdownValues();
         let parsedSegments = 0;
 
-        const payload = line.slice(4).trim();
         for (const segment of payload.split("/")) {
           const parts = segment.trim().split(" ").filter(Boolean);
           if (parts.length !== 2) {
@@ -356,11 +349,110 @@ ${HOME_PAGE_STYLES}
             continue;
           }
 
-          values[key] = Math.max(${MIN_EV}, Math.min(${MAX_EV}, value));
+          values[key] = Math.max(0, Math.min(maxValue, value));
           parsedSegments += 1;
         }
 
         return parsedSegments > 0 ? values : null;
+      }
+
+      function collectShowdownTrainingLines(text) {
+        const matches = [];
+        for (const candidate of text.split(lineFeed)) {
+          const line = candidate.trim();
+          const separatorIndex = line.indexOf(":");
+          if (separatorIndex <= 0) {
+            continue;
+          }
+
+          const rawLabel = line.slice(0, separatorIndex).trim().toLowerCase();
+          const payload = line.slice(separatorIndex + 1).trim();
+          if (rawLabel !== "evs" && rawLabel !== "sps") {
+            continue;
+          }
+
+          matches.push({
+            format: rawLabel === "evs" ? "EVs" : "SPs",
+            payload,
+          });
+        }
+
+        return matches;
+      }
+
+      function parseShowdownTrainingLine(text) {
+        const trainingLines = collectShowdownTrainingLines(text);
+        if (trainingLines.length === 0) {
+          return {
+            kind: "not_found",
+          };
+        }
+
+        if (trainingLines.length > 1) {
+          const uniqueFormats = [...new Set(trainingLines.map((line) => line.format))];
+          return {
+            kind: "error",
+            message: uniqueFormats.length > 1
+              ? "Showdown set is malformed: include only one training line type, either EVs or SPs."
+              : "Showdown set is malformed: include only one EVs/SPs line.",
+          };
+        }
+
+        const [trainingLine] = trainingLines;
+        if (!trainingLine) {
+          return {
+            kind: "not_found",
+          };
+        }
+
+        if (trainingLine.format === "EVs") {
+          const evs = parseTrainingPayload(trainingLine.payload, ${MAX_EV});
+          if (!evs) {
+            return {
+              kind: "error",
+              message: "Showdown set has a malformed EVs line.",
+            };
+          }
+
+          return {
+            kind: "ok",
+            format: "EVs",
+            evs,
+            points: convertLegacyEvsToPoints(evs),
+          };
+        }
+
+        const points = parseTrainingPayload(trainingLine.payload, maxStatPoints);
+        if (!points) {
+          return {
+            kind: "error",
+            message: "Showdown set has a malformed SPs line.",
+          };
+        }
+
+        const total = totalPoints(points);
+        if (total > maxTotal) {
+          return {
+            kind: "error",
+            message: "Showdown set SPs exceed 66-point cap.",
+          };
+        }
+
+        return {
+          kind: "ok",
+          format: "SPs",
+          evs: null,
+          points,
+        };
+      }
+
+      function parseShowdownEvs(text) {
+        const parsed = parseShowdownTrainingLine(text);
+        if (!parsed || parsed.kind !== "ok" || parsed.format !== "EVs") {
+          return null;
+        }
+
+        return parsed.evs;
       }
 
       function convertLegacyEvsToPoints(values) {
@@ -496,7 +588,10 @@ ${HOME_PAGE_STYLES}
       function parseWholeShowdownSet(text) {
         const trimmed = sanitizeShowdownText(text);
         if (!trimmed) {
-          return null;
+          return {
+            kind: "error",
+            message: "Paste a full Showdown set with an EVs/SPs line to preview it.",
+          };
         }
 
         const nonEmptyLines = trimmed
@@ -505,22 +600,33 @@ ${HOME_PAGE_STYLES}
           .filter(Boolean);
 
         if (nonEmptyLines.length < 2) {
-          return null;
+          return {
+            kind: "error",
+            message: "Paste a full Showdown set with an EVs/SPs line to preview it.",
+          };
         }
 
-        const evs = parseShowdownEvs(trimmed);
-        if (!evs) {
-          return null;
+        const parsedTraining = parseShowdownTrainingLine(trimmed);
+        if (parsedTraining.kind === "not_found") {
+          return {
+            kind: "error",
+            message: "Paste a full Showdown set with at least one EVs/SPs line before importing.",
+          };
         }
 
-        const points = convertLegacyEvsToPoints(evs);
+        if (parsedTraining.kind === "error") {
+          return parsedTraining;
+        }
+
         return {
-          evs,
+          kind: "ok",
+          evs: parsedTraining.evs,
+          format: parsedTraining.format,
           natureName: parseShowdownNature(trimmed),
-          points,
+          points: parsedTraining.points,
           text: trimmed,
           ...parseShowdownLead(trimmed),
-          total: totalPoints(points),
+          total: totalPoints(parsedTraining.points),
         };
       }
 
@@ -1611,11 +1717,14 @@ ${HOME_PAGE_STYLES}
 
       function previewShowdownImport(text) {
         const parsed = parseWholeShowdownSet(text);
-        if (!parsed) {
+        if (parsed.kind !== "ok") {
+          pendingShowdownText = "";
+          setShowdownImportFeedback(parsed.message, true);
           return false;
         }
 
         pendingShowdownText = parsed.text;
+        setShowdownImportFeedback("Preview ready. Confirm to import this EVs/SPs spread.");
 
         if (showdownConfirmCopy instanceof HTMLElement) {
           showdownConfirmCopy.textContent = parsed.total > maxTotal
@@ -1632,7 +1741,7 @@ ${HOME_PAGE_STYLES}
 
       function commitPendingShowdownImport() {
         const parsed = parseWholeShowdownSet(pendingShowdownText);
-        if (!parsed) {
+        if (parsed.kind !== "ok") {
           return;
         }
 
@@ -1663,7 +1772,7 @@ ${HOME_PAGE_STYLES}
         }
 
         setShowdownImportStatus("No Showdown set imported");
-        setShowdownImportFeedback("Paste a full Showdown set with an EVs line to preview it.");
+        setShowdownImportFeedback("Paste a full Showdown set with an EVs/SPs line to preview it.");
       }
 
       function isEditableTarget(target) {
@@ -2247,7 +2356,7 @@ ${HOME_PAGE_STYLES}
       if (showdownImportButton instanceof HTMLButtonElement) {
         showdownImportButton.addEventListener("click", () => {
           syncShowdownImportInput();
-          setShowdownImportFeedback("Paste a full Showdown set with an EVs line to preview it.");
+          setShowdownImportFeedback("Paste a full Showdown set with an EVs/SPs line to preview it.");
           openModal(showdownImportModal);
         });
       }
@@ -2265,10 +2374,6 @@ ${HOME_PAGE_STYLES}
             showdownImportInput.value = text;
           }
           if (!previewShowdownImport(text)) {
-            setShowdownImportFeedback(
-              "Paste a full Showdown set with at least one EVs line before importing.",
-              true,
-            );
             return;
           }
 
